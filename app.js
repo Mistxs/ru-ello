@@ -2,12 +2,19 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+const session = require('express-session');
 
 // Создание экземпляра приложения Express
 const app = express();
 
 // Парсинг тела запроса
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: '(!78675&^!%!)',
+    resave: false,
+    saveUninitialized: true
+}));
+
 
 // Подключение к MySQL
 const connection = mysql.createConnection({
@@ -84,6 +91,8 @@ app.post('/login', (req, res) => {
         }
         if (results.length > 0) {
             // Пользователь существует и аутентификация прошла успешно
+            const authenticatedUser = results[0];
+            req.session.username = authenticatedUser.username;
             res.redirect('/user');
         } else {
             res.send('Неправильное имя пользователя или пароль');
@@ -94,8 +103,24 @@ app.post('/login', (req, res) => {
 
 // Страница авторизованного пользователя
 app.get('/user', (req, res) => {
-    res.send('<h1>Добро пожаловать, Авторизованный Пользователь</h1>');
+    const username = req.session.username; // Получаем имя пользователя из сеанса
+    res.send(`
+    <h1>Добро пожаловать, ${username}</h1>
+    <form action="/logout" method="post">
+      <input type="submit" value="Выйти">
+    </form>
+    `);
 });
+
+// Роут для выхода
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) throw err;
+        res.redirect('/login'); // Перенаправление на страницу авторизации
+    });
+});
+
+
 
 
 // Запуск сервера
