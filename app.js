@@ -1,53 +1,105 @@
-// app.js
+// Подключение библиотек
 const express = require('express');
-const app = express();
+const mysql = require('mysql');
 const bodyParser = require('body-parser');
 
-app.use(bodyParser.json());
+// Создание экземпляра приложения Express
+const app = express();
+
+// Парсинг тела запроса
 app.use(bodyParser.urlencoded({ extended: true }));
 
-let tasks = [
-    { id: 1, title: 'To Do', cards: [] },
-    { id: 2, title: 'In Progress', cards: [] },
-    { id: 3, title: 'Done', cards: [] }
-];
-
-app.get('/tasks', (req, res) => {
-    res.json(tasks);
+// Подключение к MySQL
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'Ose7vgt5!',
+    database: 'ruello'
 });
 
-app.post('/tasks/:id/cards', (req, res) => {
-    const { id } = req.params;
-    const { title } = req.body;
-    const task = tasks.find(task => task.id === parseInt(id));
-    if (task) {
-        task.cards.push({ title });
-        res.json(task);
-    } else {
-        res.status(404).json({ message: 'Task not found' });
-    }
+connection.connect((err) => {
+    if (err) throw err;
+    console.log('Подключено к MySQL');
 });
 
-app.put('/tasks/:taskId/cards/:cardId', (req, res) => {
-    const { taskId, cardId } = req.params;
-    const { newTaskId } = req.body;
-    const sourceTask = tasks.find(task => task.id === parseInt(taskId));
-    const targetTask = tasks.find(task => task.id === parseInt(newTaskId));
-    if (sourceTask && targetTask) {
-        const cardIndex = sourceTask.cards.findIndex(card => card.id === parseInt(cardId));
-        if (cardIndex !== -1) {
-            const [card] = sourceTask.cards.splice(cardIndex, 1);
-            targetTask.cards.push(card);
-            res.json({ sourceTask, targetTask });
-        } else {
-            res.status(404).json({ message: 'Card not found in source task' });
+// Роут для стартовой страницы
+app.get('/', (req, res) => {
+    res.send('<h1>Добро пожаловать!</h1><a href="/login">Авторизация / Регистрация</a>');
+});
+
+// Роут для страницы регистрации
+app.get('/register', (req, res) => {
+    res.send('<h1>Регистрация</h1>' +
+        '<form action="/register" method="post">' +
+        ' <input type="text" name="username" placeholder="Имя пользователя" required><br>' +
+        ' <input type="password" name="password" placeholder="Пароль" required><br>' +
+        ' <input type="submit" value="Зарегистрироваться">' +
+        '</form>');
+});
+
+
+
+// Роут для обработки данных формы регистрации
+app.post('/register', (req, res) => {
+    const { username, password } = req.body;
+    // Проверяем, не существует ли уже пользователя с таким именем
+    connection.query('SELECT * FROM users WHERE username = ?', [username], (error, results) => {
+        if (error) {
+            throw error;
         }
-    } else {
-        res.status(404).json({ message: 'Source or target task not found' });
-    }
+        if (results.length > 0) {
+            res.send('Пользователь с таким именем уже существует');
+        } else {
+            // Добавляем нового пользователя в базу данных
+            connection.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password], (error, result) => {
+                if (error) {
+                    throw error;
+                }
+                res.send('Регистрация прошла успешно. <a href="/login">Войти</a>');
+            });
+        }
+    });
 });
 
-const PORT = 3900;
+
+
+// Роут для страницы авторизации / регистрации
+app.get('/login', (req, res) => {
+    res.send('<h1>Авторизация / Регистрация</h1>' +
+        '<form action="/login" method="post">' +
+        ' <input type="text" name="username" placeholder="Имя пользователя" required><br>' +
+        ' <input type="password" name="password" placeholder="Пароль" required><br>' +
+        ' <input type="submit" value="Войти">' +
+        '</form>');
+});
+
+
+// Роут для обработки данных формы авторизации
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    // Ищем пользователя в базе данных
+    connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (error, results) => {
+        if (error) {
+            throw error;
+        }
+        if (results.length > 0) {
+            // Пользователь существует и аутентификация прошла успешно
+            res.redirect('/user');
+        } else {
+            res.send('Неправильное имя пользователя или пароль');
+        }
+    });
+});
+
+
+// Страница авторизованного пользователя
+app.get('/user', (req, res) => {
+    res.send('<h1>Добро пожаловать, Авторизованный Пользователь</h1>');
+});
+
+
+// Запуск сервера
+const PORT = 3600;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Сервер запущен на порту ${PORT}`);
 });
