@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/dragula/dist/dragula.css">
+    <style>
+        .board {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+        }
+        .column {
+            position: relative;
+            margin: 20px 0px;
+            min-height: 100px;
+        }
+        .col-wrapper {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            width: 200px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .task {
+            margin-bottom: 8px;
+            background-color: #f4f4f4;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .add-task-form, .add-column-form {
+            /*display: none;*/
+            margin-top: 10px;
+        }
+    </style>
+    <title>Kanban Board</title>
+</head>
+<body>
+<h1>Kanban Board</h1>
+<div class="board">
+    <div class="col-wrapper">
+        <button class="delete-column">Delete Column</button>
+        <h2>Todo</h2>
+        <form class="add-task-form">
+            <input type="text" placeholder="New task">
+            <button type="submit">Add</button>
+        </form>
+        <div class="column" id="todo">
+            <div class="task" >Task 1 <button class="delete-task">Delete</button></div>
+            <div class="task" draggable="true">Task 2 <button class="delete-task">Delete</button></div>
+        </div>
+    </div>
+
+    <div class="col-wrapper">
+        <button class="delete-column">Delete Column</button>
+        <h2>In progress</h2>
+        <form class="add-task-form">
+            <input type="text" placeholder="New task">
+            <button type="submit">Add</button>
+        </form>
+        <div class="column" id="in-progress">
+
+        </div>
+    </div>
+
+    <div class="col-wrapper">
+        <button class="delete-column">Delete Column</button>
+        <h2>Todo</h2>
+        <form class="add-task-form">
+            <input type="text" placeholder="New task">
+            <button type="submit">Add</button>
+        </form>
+        <div class="column" id="done">
+
+        </div>
+    </div>
+
+    <div class="add-column-form">
+        <input type="text" placeholder="New column name">
+        <button>Add Column</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/dragula/dist/dragula.js"></script>
+<script>
+    const board = document.querySelector('.board');
+
+    board.addEventListener('submit', (event) => {
+        if (event.target.classList.contains('add-task-form')) {
+            event.preventDefault();
+            const input = event.target.querySelector('input');
+            const newTask = document.createElement('div');
+            newTask.classList.add('task');
+            newTask.draggable = true;
+            newTask.textContent = input.value;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.classList.add('delete-task');
+            deleteButton.textContent = 'Delete';
+
+            newTask.appendChild(deleteButton);
+
+            event.target.nextElementSibling.appendChild(newTask);
+            input.value = '';
+        }
+    });
+
+
+    board.addEventListener('click', (event) => {
+        if (event.target.classList.contains('task')) {
+            const column = event.target.closest('.column');
+            alert(`Task: ${event.target.textContent}, Column: ${column.id}`);
+        }
+
+        if (event.target.classList.contains('delete-task')) {
+            event.target.parentNode.remove();
+        }
+
+        if (event.target.classList.contains('delete-column')) {
+            event.target.closest('.col-wrapper').remove();
+        }
+    });
+
+
+
+    const addColumnForm = board.querySelector('.add-column-form');
+    const columnNameInput = addColumnForm.querySelector('input');
+
+    addColumnForm.addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            const newColumn = document.createElement('div');
+            newColumn.classList.add('col-wrapper');
+            newColumn.innerHTML = `
+            <button class="delete-column">Delete Column</button>
+            <h2>${columnNameInput.value}</h2>
+
+            <form class="add-task-form">
+                <input type="text" placeholder="New task">
+                <button type="submit">Add</button>
+            </form>
+            <div class="column" id="${columnNameInput.value.toLowerCase().replace(/\s/g, '-')}">
+            </div>
+        `;
+            board.insertBefore(newColumn, addColumnForm);
+            drake.containers.push(newColumn.querySelector('.column'));
+            columnNameInput.value = '';
+        }
+    });
+
+
+
+
+    // let drake = dragula([document.getElementById('todo'), document.getElementById('in-progress'), document.getElementById('done')]);
+    let drake = dragula([], {
+        moves: function (el, container, handle) {
+            return handle.classList.contains('task');
+        }
+    });
+
+    drake.containers.push(document.getElementById('todo'));
+    drake.containers.push(document.getElementById('in-progress'));
+    drake.containers.push(document.getElementById('done'));
+
+</script>
+</body>
+</html>

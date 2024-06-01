@@ -3,6 +3,9 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const ejs = require('ejs');
+const path = require('path');
+
 
 // Создание экземпляра приложения Express
 const app = express();
@@ -14,13 +17,15 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 
 // Подключение к MySQL
 const connection = mysql.createConnection({
     host: 'localhost',
-    user: 'root',
-    password: 'Ose7vgt5!',
+    user: 'ruello',
+    password: 'ruellopassword',
     database: 'ruello'
 });
 
@@ -101,16 +106,13 @@ app.post('/login', (req, res) => {
 });
 
 
-// Страница авторизованного пользователя
+// Роут для включения views/board.html
 app.get('/user', (req, res) => {
     const username = req.session.username; // Получаем имя пользователя из сеанса
-    res.send(`
-    <h1>Добро пожаловать, ${username}</h1>
-    <form action="/logout" method="post">
-      <input type="submit" value="Выйти">
-    </form>
-    `);
+    res.render('user', { username: username }); // Создание и отображение шаблона user.ejs, где board.html уже подключен
 });
+
+
 
 // Роут для выхода
 app.post('/logout', (req, res) => {
