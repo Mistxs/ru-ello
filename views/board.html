@@ -44,25 +44,23 @@
     <title>Kanban Board</title>
 </head>
 <body>
-<h1>Kanban Board</h1>
+<div class="board-wrapper">
 <h3 class="board-title"></h3>
 <div class="board" id="board">
 
 </div>
-
+</div>
 <div class="add-board">
     <input type="text" placeholder="New board name">
     <button onclick="addboard();">Add board</button>
 </div>
-
 <div class="boardList"></div>
 
 <script src="https://unpkg.com/dragula/dist/dragula.js"></script>
 <script src="https://cdn.socket.io/4.2.0/socket.io.min.js"></script>
 
 <script>
-    const board = document.querySelector('.board');
-
+    const board = document.querySelector('.board-wrapper');
     const socket = io('http://localhost:3600');
 
     board.addEventListener('submit', (event) => {
@@ -83,7 +81,7 @@
 
             event.target.nextElementSibling.appendChild(newTask);
 
-            socket.emit('add-task', {name: input.value, boardId: board.getAttribute("boardId"), column: event.target.nextElementSibling.getAttribute("cid")});
+            socket.emit('add-task', {name: input.value, boardId: board.querySelector('.board').getAttribute("boardId"), column: event.target.nextElementSibling.getAttribute("cid")});
             socket.on('add-task', (data) => {
                 const insertedTask = document.querySelector('[task_id="new"]');
                 insertedTask.setAttribute('task_id', data.taskId);
@@ -93,11 +91,55 @@
         }
     });
 
+    board.addEventListener('click', (event) => {
+        if (event.target.classList.contains('task')) {
+            const column = event.target.closest('.column');
+            alert(`Task: ${event.target.textContent}, Column: ${column.id}`);
+        }
+
+        if (event.target.classList.contains('delete-task')) {
+            if (confirm('Вы действительно хотите удалить задачу?')) {
+                event.target.parentNode.remove();
+                socket.emit('deleted-task', {task: event.target.parentNode.getAttribute("task_id")});
+            }
+        }
+
+        if (event.target.classList.contains('delete-board')) {
+            if (confirm('Вы действительно хотите удалить доску?')) {
+                boardid = document.getElementById('board');
+                clearBoard();
+                socket.emit('deleted-board', {boardid: boardid.getAttribute("boardid")});
+                displayBoards();
+            }
+        }
+
+
+        if (event.target.classList.contains('delete-column')) {
+            if (confirm('Вы действительно хотите удалить очередь?')) {
+                event.target.closest('.col-wrapper').remove();
+                socket.emit('deleted-column', {cid: event.target.closest('.col-wrapper').querySelector('.column').getAttribute('cid')});
+            }
+        }
+
+        if (event.target.classList.contains('add-column')) {
+            addColumn();
+        }
+    });
+
     function clearBoard(){
         const board = document.querySelector('.board');
-        board.innerHTML = `<div class="add-column-form">
-        <input type="text" class="column-name" placeholder="New column name">
-        <button class="add-column">Add Column</button>
+        const boardtitle = document.querySelector('.board-title');
+        boardtitle.innerHTML = "";
+        board.innerHTML = ``;
+    }
+
+    function initializeboard(){
+        clearBoard();
+        const board = document.querySelector('.board');
+        board.innerHTML = `
+        <div class="add-column-form">
+            <input type="text" class="column-name" placeholder="New column name">
+                <button class="add-column">Add Column</button>
         </div>`;
     }
 
@@ -121,7 +163,7 @@
             .then(data => {
                 const board_id = data.id;
                 const boardTitle = document.querySelector('.board-title');
-                clearBoard();
+                initializeboard();
                 displayBoards();
                 boardTitle.textContent = boardNameInput.value;
                 fetchColumnsAndTasks(board_id);
@@ -164,27 +206,7 @@
         columnNameInput.value = '';
     }
 
-    board.addEventListener('click', (event) => {
-        if (event.target.classList.contains('task')) {
-            const column = event.target.closest('.column');
-            alert(`Task: ${event.target.textContent}, Column: ${column.id}`);
-        }
 
-        if (event.target.classList.contains('delete-task')) {
-            event.target.parentNode.remove();
-            socket.emit('deleted-task', {task: event.target.parentNode.getAttribute("task_id")});
-        }
-
-        if (event.target.classList.contains('delete-column')) {
-            event.target.closest('.col-wrapper').remove();
-            console.log(event.target.closest('.col-wrapper').querySelector('.column').getAttribute('cid'));
-            socket.emit('deleted-column', {cid: event.target.closest('.col-wrapper').querySelector('.column').getAttribute('cid')});
-        }
-
-        if (event.target.classList.contains('add-column')) {
-            addColumn();
-        }
-    });
 
     dragula([document.getElementById('board')], {
         moves: function (el, container, handle) {
@@ -220,8 +242,9 @@
                     const boardButton = document.createElement('button');
                     const boardTitle = document.querySelector('.board-title');
                     boardButton.textContent = board.title;
+
                     boardButton.addEventListener('click', () => {
-                        clearBoard();
+                        initializeboard();
                         boardTitle.textContent = board.title;
                         fetchColumnsAndTasks(board.id);
                     });
@@ -255,6 +278,12 @@
 
     function displayColumns(columns, boardId) {
         const board = document.querySelector('.board');
+        const boardTitle = document.querySelector('.board-title');
+        const deletebutton = document.createElement('button');
+        deletebutton.classList.add('delete-board');
+        deletebutton.textContent = 'Удалить доску';
+        boardTitle.appendChild(deletebutton);
+
         board.setAttribute("boardId", boardId);
         const addColumnForm = board.querySelector('.add-column-form');
 
@@ -318,8 +347,6 @@
             }
         });
     }
-
-
 
 </script>
 

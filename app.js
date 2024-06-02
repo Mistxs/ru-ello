@@ -123,6 +123,31 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('deleted-board', (data) => {
+        // Обрабатывать данные о новой задаче, отправленные от клиента
+        console.log('Удалена доска:', data);
+        // Здесь вы можете добавить код для сохранения этой задачи в базу данных MySQL
+        const bid = parseInt(data.boardid);
+        connection.query('UPDATE ruello.boards t SET t.deleted = 1 WHERE t.id = ?', [bid], (error, result) => {
+            if (error) {
+                throw error;
+            }
+            console.log('Успешно удалена доска в БД');
+        });
+        connection.query('UPDATE ruello.columns t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
+            if (error) {
+                throw error;
+            }
+            console.log('Успешно удалены очереди в БД');
+        });
+        connection.query('UPDATE ruello.tasks t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
+            if (error) {
+                throw error;
+            }
+            console.log('Успешно удалены таски в удаленных столбцах в БД');
+        });
+    });
+
     socket.on('update-task', (data) => {
         // Приводим данные к типу int
         const taskId = parseInt(data.task);
