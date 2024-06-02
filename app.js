@@ -165,6 +165,32 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('update-order', (data) => {
+        // Обрабатываем данные о новой задаче, отправленные от клиента
+        console.log('Новая сортировка событий:', data);
+
+        data.forEach((item) => {
+            const query = `UPDATE columns SET weight = ${item.weight} WHERE id = ${item.id}`;
+            connection.query(query, (err, result) => {
+                if (err) throw err;
+                console.log(`Updated weight for id ${item.id} to ${item.weight}`);
+            });
+        });
+    });
+
+    socket.on('update-order-task', (data) => {
+        // Обрабатываем данные о новой задаче, отправленные от клиента
+        console.log('Новая сортировка задач:', data);
+
+        data.forEach((item) => {
+            const query = `UPDATE tasks SET weight = ${item.weight} WHERE id = ${item.id}`;
+            connection.query(query, (err, result) => {
+                if (err) throw err;
+                console.log(`Updated weight for id ${item.id} to ${item.weight}`);
+            });
+        });
+    });
+
 
 
 
@@ -289,7 +315,7 @@ app.post('/boards/create', (req, res) => {
 // Получение колонок для выбранной доски
 app.get('/columns/:boardId', (req, res) => {
     const boardId = req.params.boardId;
-    const query = `SELECT * FROM columns WHERE board_id = ? and deleted = 0`;
+    const query = `SELECT * FROM columns WHERE board_id = ? and deleted = 0 order by weight asc`;
     connection.query(query, [boardId], (err, results) => {
         if (err) throw err;
         res.json(results);
