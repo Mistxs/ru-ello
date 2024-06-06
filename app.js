@@ -6,15 +6,13 @@ const session = require('express-session');
 const ejs = require('ejs');
 const path = require('path');
 
-
-
-
 // Создание экземпляра приложения Express
 const app = express();
 
+app.use(express.static(__dirname));
+
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-
 
 
 // Парсинг тела запроса
@@ -25,6 +23,7 @@ app.use(session({
     saveUninitialized: true
 }));
 app.use(express.json());
+app.use(express.static(`${__dirname}/assets`));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

@@ -1,0 +1,35 @@
+.handle {
+    padding: 0 5px;
+    margin-right: 5px;
+    background-color: rgba(0, 0, 0, 0.4);
+    cursor: move;
+}
+.board {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px;
+}
+.column {
+    position: relative;
+    margin: 20px 0px;
+    min-height: 100px;
+}
+.col-wrapper {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    width: 200px;
+    position: relative;
+    margin-bottom: 20px;
+}
+.task {
+    margin-bottom: 8px;
+    background-color: #f4f4f4;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.add-task-form, .add-column-form {
+    /*display: none;*/
+    margin-top: 10px;
+}
