@@ -79,7 +79,10 @@
 
             newTask.appendChild(deleteButton);
 
-            event.target.nextElementSibling.appendChild(newTask);
+            const list = event.target.nextElementSibling;
+            const firstTask = list.firstChild;
+            list.insertBefore(newTask, firstTask);
+
 
             socket.emit('add-task', {name: input.value, boardId: board.querySelector('.board').getAttribute("boardId"), column: event.target.nextElementSibling.getAttribute("cid")});
             socket.on('add-task', (data) => {
@@ -231,11 +234,20 @@
     });
 
     drake.on('drop', function (el, target, source) {
-
         const task = el.getAttribute("task_id");
         const from = source.getAttribute("cid");
         const to = target.getAttribute("cid");
+
+
+        const tasks = target.querySelectorAll('.task');
+        const weights = Array.from(tasks).map((task, index) => {
+            const taskId = task.getAttribute('task_id');
+            return { id: taskId, weight: index + 1 };
+        });
+
         socket.emit('update-task', {task, from, to});
+        socket.emit('update-order-task', weights);
+
 
     });
 
@@ -360,7 +372,14 @@
         });
     }
 
+
+
+
 </script>
 
 </body>
 </html>
+
+
+
+

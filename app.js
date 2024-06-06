@@ -47,14 +47,15 @@ connection.connect((err) => {
 });
 
 
+
 io.on('connection', (socket) => {
     console.log('Подключился пользователь'  );
 
+
     socket.on('add-task', (data) => {
-        // Обрабатывать данные о новой задаче, отправленные от клиента
         console.log('Новая задача:', data);
 
-        // Здесь вы можете добавить код для сохранения этой задачи в базу данных MySQL
+        // Парсинг данных из полученного объекта data
         const taskTitle = data.name;
         const boardId = parseInt(data.boardId);
         const columnId = parseInt(data.column);
@@ -72,7 +73,6 @@ io.on('connection', (socket) => {
 
 
     socket.on('deleted-task', (data) => {
-        // Обрабатывать данные о новой задаче, отправленные от клиента
         console.log('Удалена задача:', data);
         const taskId = parseInt(data.task);
         connection.query('UPDATE ruello.tasks t SET t.deleted = 1 WHERE t.id = ?', [taskId], (error, result) => {
@@ -84,13 +84,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('add-column', (data) => {
-        // Обрабатывать данные о новой задаче, отправленные от клиента
         console.log('Новая очередь:', data);
-
-        // Здесь вы можете добавить код для сохранения этой задачи в базу данных MySQL
         const columnTitle = data.name;
         const boardId = parseInt(data.boardId);
-
 
         // Выполняем запрос к базе данных MySQL
         connection.query('INSERT INTO columns (title, board_id) VALUES (?, ?)', [columnTitle, boardId], (error, result) => {
@@ -105,9 +101,7 @@ io.on('connection', (socket) => {
 
 
     socket.on('deleted-column', (data) => {
-        // Обрабатывать данные о новой задаче, отправленные от клиента
         console.log('Удален столбец:', data);
-        // Здесь вы можете добавить код для сохранения этой задачи в базу данных MySQL
         const cid = parseInt(data.cid);
         connection.query('UPDATE ruello.columns t SET t.deleted = 1 WHERE t.id = ?', [cid], (error, result) => {
             if (error) {
@@ -124,9 +118,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('deleted-board', (data) => {
-        // Обрабатывать данные о новой задаче, отправленные от клиента
         console.log('Удалена доска:', data);
-        // Здесь вы можете добавить код для сохранения этой задачи в базу данных MySQL
         const bid = parseInt(data.boardid);
         connection.query('UPDATE ruello.boards t SET t.deleted = 1 WHERE t.id = ?', [bid], (error, result) => {
             if (error) {
@@ -153,7 +145,6 @@ io.on('connection', (socket) => {
         const taskId = parseInt(data.task);
         const columnId = parseInt(data.to);
 
-        // Обрабатываем данные о новой задаче, отправленные от клиента
         console.log('Перемещена задача:', data);
 
         // Выполняем запрос к базе данных MySQL
@@ -166,7 +157,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('update-order', (data) => {
-        // Обрабатываем данные о новой задаче, отправленные от клиента
         console.log('Новая сортировка событий:', data);
 
         data.forEach((item) => {
@@ -179,7 +169,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('update-order-task', (data) => {
-        // Обрабатываем данные о новой задаче, отправленные от клиента
         console.log('Новая сортировка задач:', data);
 
         data.forEach((item) => {
@@ -190,11 +179,6 @@ io.on('connection', (socket) => {
             });
         });
     });
-
-
-
-
-    // Добавьте другие обработчики событий при необходимости
 
     socket.on('disconnect', () => {
         console.log('Пользователь отключился');
@@ -325,7 +309,7 @@ app.get('/columns/:boardId', (req, res) => {
 // Получение задач для выбранной доски
 app.get('/tasks/:boardId', (req, res) => {
     const boardId = req.params.boardId;
-    const query = `SELECT * FROM tasks WHERE board_id = ? and deleted = 0`;
+    const query = `SELECT * FROM tasks WHERE board_id = ? and deleted = 0 order by column_id, weight asc `;
     connection.query(query, [boardId], (err, results) => {
         if (err) throw err;
         res.json(results);
@@ -351,3 +335,13 @@ const port = 3600;
 http.listen(port, () => {
     console.log(`Сервер запущен на порту ${port}`);
 });
+
+
+
+
+
+
+
+
+
+
