@@ -1,5 +1,17 @@
-<h1>Добро пожаловать, <%= username %>, <%= userid %></h1>
-<form action="/logout" method="post">
-    <input type="submit" value="Выйти">
-</form>
-<%- include('board.html') %> <!-- Включение содержимого board.html -->
+<%- include('header', {title: pageTitle}) %>
+
+<%- include('userprofile', {username: username, userid: userid}) %>
+
+
+<div class="board-wrapper">
+    <h3 class="board-title"></h3>
+    <div class="board" id="board">
+    </div>
+</div>
+<div class="add-board">
+    <input type="text" placeholder="New board name">
+    <button onclick="addboard();">Add board</button>
+</div>
+<div class="boardList"></div>
+
+<%- include('footer') %>
