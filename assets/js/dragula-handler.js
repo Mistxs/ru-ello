@@ -18,17 +18,17 @@ dragula([document.getElementById('board')], {
 
 
 let drake = dragula([], {
-    moves: function (el, container, handle) {
-        return handle.classList.contains('task');
-    }
+    // moves: function (el, container, handle) {
+    //     return handle.classList.contains('task-card');
+    // }
 });
 
 drake.on('drop', function (el, target, source) {
+    // console.log(el);
     const task = el.getAttribute("task_id");
     const from = source.getAttribute("cid");
     const to = target.getAttribute("cid");
-
-
+    
     const tasks = target.querySelectorAll('.task');
     const weights = Array.from(tasks).map((task, index) => {
         const taskId = task.getAttribute('task_id');

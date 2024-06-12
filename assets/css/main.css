@@ -1,13 +1,11 @@
 .handle {
-    padding: 0 5px;
-    margin-right: 5px;
-    background-color: rgba(0, 0, 0, 0.4);
     cursor: move;
 }
 .board {
     display: flex;
     justify-content: space-around;
     margin: 20px;
+    align-items: flex-start;
 }
 .column {
     position: relative;
@@ -18,18 +16,96 @@
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
-    width: 200px;
+    min-width: 300px;
     position: relative;
     margin-bottom: 20px;
 }
 .task {
+    position: relative;
     margin-bottom: 8px;
-    background-color: #f4f4f4;
+    background-color: #00000045;
     padding: 8px;
     border-radius: 5px;
     cursor: pointer;
 }
+
 .add-task-form, .add-column-form {
-    /*display: none;*/
     margin-top: 10px;
 }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.add-form-btn {
+    display: block;
+}
+
+.dropdown-content {
+    display: none;
+    background-color: #a68b8b45;
+    backdrop-filter: blur(10px);
+    border-radius: 0px 0px 20px 20px;
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    padding: 12px;
+}
+
+.dropdown-content input {
+    border: none;
+    padding: 10px 20px;
+    background: #eefff900;
+    color: black;
+}
+
+.dropdown-content button[type='submit']
+{
+                                    width: 80px;
+                                    border: none;
+                                    /* background-color: rgb(250, 95, 95); */
+                                    border-radius: 10px;
+                                }
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.menu-toggle {
+    color: #fff3cd;
+    justify-content: flex-end;
+}
+.menu-toggle:hover {
+    text-decoration: none;
+}
+
+.delete-task {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: none;
+    background: none;
+    color: gold;
+}
+
+.task-title {
+    padding-right: 20px;
+    border: none;
+    word-wrap: break-word;
+    background-color: transparent;
+    font-family: inherit; /* Наследовать семейство шрифтов */
+    font-size: inherit; /* Наследовать размер шрифта */
+    line-height: inherit; /* Наследовать межстрочный интервал */
+    color: inherit; /* Наследовать цвет текста */
+}
+
+.task-title:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+
+.bx {
+    pointer-events: none;
+}
+

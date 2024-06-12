@@ -102,42 +102,28 @@ function displayColumns(columns, boardId) {
     columns.forEach(column => {
         const colWrapper = document.createElement('div');
         colWrapper.classList.add('col-wrapper');
+        colWrapper.innerHTML = `
+            <div class="row justify-content-between">
+                <span class="handle col"><i class="bx bxs-grid"></i></span>
+                <div class="dropdown col text-right">
+                    <a class="menu-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                        <i class="bx bx-menu"></i>
+                    </a>
+                    <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(15px, 38px, 0px); top: 0px; left: 0px; will-change: transform;">
+                        <a class="dropdown-item delete-column" href="#">Удалить очередь</a>
+                        <a class="dropdown-item add-task" href="#">Создать задачу</a>
+                        <a class="dropdown-item move-col" href="#">Перенести на доску</a>
+                    </div>
+                </div>
+            </div>  
+            <h2>${column.title}</h2>
+            
+            <div class="column" id="${column.title}" cid="${column.id}"></div>
 
-        const moveblock = document.createElement('span');
-        moveblock.classList.add('handle');
-        moveblock.textContent = '+';
-        colWrapper.appendChild(moveblock);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.classList.add('delete-column');
-        deleteButton.textContent = 'Delete Column';
-        colWrapper.appendChild(deleteButton);
-
-        const h2 = document.createElement('h2');
-        h2.textContent = column.title;
-        colWrapper.appendChild(h2);
-
-        const form = document.createElement('form');
-        form.classList.add('add-task-form');
-        const input = document.createElement('input');
-        input.setAttribute('type', 'text');
-        input.setAttribute('placeholder', 'New task');
-        const submitButton = document.createElement('button');
-        submitButton.setAttribute('type', 'submit');
-        submitButton.textContent = 'Add';
-        form.appendChild(input);
-        form.appendChild(submitButton);
-        colWrapper.appendChild(form);
-
-        const columnDiv = document.createElement('div');
-        columnDiv.classList.add('column');
-        columnDiv.id = column.title;
-        columnDiv.setAttribute("cid",column.id);
-        colWrapper.appendChild(columnDiv);
+        `;
 
         board.insertBefore(colWrapper, addColumnForm);
         drake.containers.push(colWrapper.querySelector('.column'));
-
     });
 }
 
@@ -145,14 +131,16 @@ function displayTasks(tasks) {
     tasks.forEach(task => {
         const column = document.querySelector(`[cid="${task.column_id}"]`);
         if (column) {
+            
             const taskDiv = document.createElement('div');
             taskDiv.classList.add('task');
             taskDiv.setAttribute("task_id", task.id);
-            taskDiv.textContent = task.title;
-            const deleteButton = document.createElement('button');
-            deleteButton.classList.add('delete-task');
-            deleteButton.textContent = 'Delete';
-            taskDiv.appendChild(deleteButton);
+            taskDiv.innerHTML = `
+                    <span class="badge badge-primary"></span>
+                    <div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${task.title}</div>
+                    <button class="btn delete-task"><i class="bx bx-trash"></i></button>
+                   
+            `;
             column.appendChild(taskDiv);
         } else {
             console.error(`Column with id ${task.column_id} not found.`);

@@ -1,0 +1,116 @@
+* {
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, rgb(185, 43, 39), rgb(21, 101, 192));
+}
+
+header {
+    width: 100vw;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .info-container {
+    color: rgb(255, 255, 255);
+    width: 500px;
+    margin: 10px 30px;
+}
+
+header .input-container {
+    margin: 0 30px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+}
+
+.fields {
+    display: flex;
+    flex-direction: column;
+}
+
+.fields #title {
+    width: 270px;
+    border: none;
+    border-radius: 10px 0 0 0;
+    padding: 10px 20px;
+}
+
+.fields #description {
+    width: 270px;
+    border: none;
+    border-radius: 0 0 0 10px;
+    padding: 20px;
+}
+
+input[type='submit'] {
+    width: 80px;
+    border: none;
+    background-color: rgb(250, 95, 95);
+    border-radius: 0 10px 10px 0;
+}
+
+.board {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.board .col-wrapper {
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 20px;
+    margin: 10px;
+    width: 300px;
+}
+
+.task-list {
+    width: 100%;
+    height: 100%;
+}
+
+.task-container {
+    background-color: rgb(255, 255, 255);
+    border-radius: 16px;
+    margin: 20px 0;
+    box-shadow: rgba(60, 64, 67, 0.3) 0 1px 2px,
+    rgba(60, 64, 67, 0.15) 0 2px 6px 2px;
+    overflow: hidden;
+}
+
+.task-header {
+    background-color: rgb(96, 96, 192);
+    color: rgb(255, 255, 255);
+    padding: 5px 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.task-description-container {
+    padding: 10px;
+    color: rgb(78, 78, 78);
+}
+
+.error-container {
+    height: 30px;
+}
+
+.error-message {
+    text-align: center;
+    margin: 30px;
+    background-color: rgb(143, 29, 29);
+    border-radius: 10px;
+    padding: 10px 20px;
+    color: rgb(255, 255, 255);
+}

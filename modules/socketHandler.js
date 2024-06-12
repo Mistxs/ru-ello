@@ -6,7 +6,8 @@ function handleSockets(http) {
     const io = socketIO(http);
 
     io.on('connection', (socket) => {
-        console.log('Подключился пользователь'  );
+
+
         socket.on('add-task', (data) => {
             console.log('Новая задача:', data);
 
