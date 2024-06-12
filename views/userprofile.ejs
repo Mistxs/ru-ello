@@ -1,5 +1,23 @@
 
-<h1>Добро пожаловать, <%= username %></h1>
-<form action="/logout" method="post">
-    <input type="submit" value="Выйти">
-</form>
+
+<div class="sidebar">
+    <%- include('version') %>
+    <h1>Добро пожаловать, <%= username %></h1>
+    <form id="logoutForm" action="/logout" method="post">
+        <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
+            <i class="bx bx-power-off me-2 logout" ></i>
+        </button>
+
+    </form>
+
+    <hr>
+    <div class="boardList">
+        <ul class="list-group"></ul>
+    </div>
+    <hr>
+
+    <div class="add-board">
+        <input type="text" placeholder="Добавить новую доску" class="form-control boardname">
+        <button class="btn btn-success" onclick="addboard();">Добавить доску</button>
+    </div>
+</div>

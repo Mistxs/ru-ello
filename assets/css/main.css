@@ -20,6 +20,16 @@
     position: relative;
     margin-bottom: 20px;
 }
+
+.col-wrapper-fixed {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    min-width: 300px;
+    position: relative;
+    margin-bottom: 20px;
+}
+
 .task {
     position: relative;
     margin-bottom: 8px;
@@ -30,6 +40,10 @@
 }
 
 .add-task-form, .add-column-form {
+    margin-top: 10px;
+}
+
+.add-column {
     margin-top: 10px;
 }
 
@@ -109,3 +123,109 @@
     pointer-events: none;
 }
 
+
+
+body {
+    display: flex;
+    margin: 0;
+    min-height: 100vh;
+}
+.sidebar {
+    width: 250px;
+    flex: none;
+    background-color: #07152366;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    overflow-y: auto;
+    z-index: 10;
+}
+.sidebar h1 {
+    font-size: 1.5rem;
+    color: antiquewhite;
+}
+.sidebar button {
+    width: 100%;
+    margin-top: 10px;
+}
+.content {
+    flex-grow: 1;
+    overflow-y: hidden;
+    padding: 20px 20px 20px 280px;
+}
+.board-wrapper {
+    margin-bottom: 20px;
+}
+
+
+.delete-board {
+    position: absolute;
+    visibility: hidden;
+    top: 25%;
+    right: 10px;
+    height: 100%;
+    border: none;
+    color: rgb(59 59 59);
+}
+
+.list-group-item {
+    word-wrap: break-word;
+    padding-right: 30px;
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.board-title {
+    color: #f2ede7;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 20px;
+    margin: 10px;
+    width: 500px;
+}
+
+.login-form form {
+    background: none;
+    border: none;
+}
+
+.login-form a {
+    color: #632637;
+    font-weight: 600;
+}
+
+.login-form a:hover {
+    color: #000000;
+    text-decoration: none;
+}
+
+.login-form .error {
+    color: #ffffff;
+    display: block;
+    /*background: #dc3545;*/
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    width: 100%;
+}

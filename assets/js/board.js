@@ -10,9 +10,11 @@ function initializeboard(){
     clearBoard();
     const board = document.querySelector('.board');
     board.innerHTML = `
-        <div class="add-column-form">
-            <input type="text" class="column-name" placeholder="New column name">
-                <button class="add-column">Add Column</button>
+        <div class="col-wrapper-fixed">
+            <div class="add-column-form">
+                <input type="text" id="columnInput" class="column-name form-control" placeholder="Добавить новую очередь" >
+                    <button class="add-column btn btn-success">Добавить очередь</button>
+            </div>
         </div>`;
 }
 
@@ -41,6 +43,14 @@ function addboard(){
             boardTitle.textContent = boardNameInput.value;
             fetchColumnsAndTasks(board_id);
             boardNameInput.value = "";
+
+            setTimeout(() => {
+                const newBoardItem = document.querySelector(`.boardList li[data-board-id="${board_id}"]`);
+                if (newBoardItem) {
+                    newBoardItem.classList.add('active'); // Затем добавляем активный класс новому элементу списка
+                }
+            }, 50);
+
         })
         .catch(error => {
             console.error('Произошла ошибка:', error);
@@ -54,21 +64,62 @@ function displayBoards() {
     fetch('/boards')
         .then(response => response.json())
         .then(boards => {
-            let boardlists = document.querySelector('.boardList');
+            let boardlists = document.querySelector('.list-group');
             boardlists.innerHTML = "";
-            // Отображение полученного списка досок
-            boards.forEach(board => {
-                const boardButton = document.createElement('button');
-                const boardTitle = document.querySelector('.board-title');
-                boardButton.textContent = board.title;
+            const boardListContainer = document.querySelector('.boardList ul');
 
-                boardButton.addEventListener('click', () => {
-                    initializeboard();
-                    boardTitle.textContent = board.title;
-                    fetchColumnsAndTasks(board.id);
-                });
-                boardlists.appendChild(boardButton);
+            boards.forEach(board => {
+                const listItemHTML = `
+                    <li class="list-group-item board-item" data-board-id="${board.id}">
+                        ${board.title}
+                        <span class="delete-board" data-toggle="tooltip" data-placement="right" title="Удалить доску"><i class="bx bx-trash"></i></span>
+                    </li>
+                `;
+                boardListContainer.innerHTML += listItemHTML;
             });
+
+            document.querySelectorAll('.board-item').forEach(listItem => {
+                // Слушатель для удаления доски
+                listItem.querySelector('.delete-board').addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    if (confirm('Вы действительно хотите удалить доску?')) {
+                        clearBoard();
+                        socket.emit('deleted-board', {boardid: listItem.dataset.boardId});
+                        displayBoards()
+                    };
+                });
+
+                // Слушатель для выбора доски
+                listItem.addEventListener('click', () => {
+                    // Удаляем класс active у всех элементов списка
+                    document.querySelectorAll('.board-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    // Добавляем класс active к текущему элементу списка
+                    listItem.classList.add('active');
+
+
+                    // Выполняем другие необходимые действи
+                    initializeboard();
+                    fetchColumnsAndTasks(listItem.dataset.boardId);
+
+                    // Изменяем заголовок доски
+                    const boardTitle = document.querySelector('.board-title');
+                    boardTitle.innerHTML = listItem.textContent.trim();
+                    console.log(boardTitle);
+                });
+
+                // Слушатель для показа иконки при наведении
+                listItem.addEventListener('mouseenter', () => {
+                    listItem.querySelector('.delete-board').style.visibility = 'visible';
+                });
+                listItem.addEventListener('mouseleave', () => {
+                    listItem.querySelector('.delete-board').style.visibility = 'hidden';
+                });
+            });
+
+
+
         });
 }
 
@@ -97,7 +148,7 @@ function displayColumns(columns, boardId) {
     boardTitle.appendChild(deletebutton);
 
     board.setAttribute("boardId", boardId);
-    const addColumnForm = board.querySelector('.add-column-form');
+    const addColumnForm = board.querySelector('.col-wrapper-fixed');
 
     columns.forEach(column => {
         const colWrapper = document.createElement('div');

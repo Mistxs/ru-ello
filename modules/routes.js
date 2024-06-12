@@ -1,44 +1,89 @@
 // routes.js
 const express = require('express');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 const connection = require('./db_connect'); // Импорт модуля подключения к базе данных
+const flash = require('connect-flash');
+const { body, validationResult } = require('express-validator');
 
+function validateLoginInput(username, password) {
+    const errors = [];
+    if (!username || !password) {
+        errors.push('Все поля обязательны для заполнения');
+    }
+    if (username.length < 6 || username.length > 12) {
+        errors.push('Логин должен быть от 6 до 12 символов');
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        errors.push('Логин может содержать только латинские буквы, цифры, "_" и "-"');
+    }
+    if (password.length < 6) {
+        errors.push('Пароль должен быть не менее 6 символов');
+    }
+    if (!/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(password)) {
+        errors.push('Пароль может содержать только латинские буквы и символы');
+    }
+    return errors;
+}
+
+router.use(flash());
+
+router.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
+});
 
 
 // Роут для стартовой страницы
 router.get('/', (req, res) => {
-    res.send('<h1>Добро пожаловать!</h1><a href="/login">Авторизация / Регистрация</a>');
+    res.redirect('/user');
 });
 
 // Роут для страницы регистрации
 router.get('/register', (req, res) => {
-    res.send('<h1>Регистрация</h1>' +
-        '<form action="/register" method="post">' +
-        ' <input type="text" name="username" placeholder="Имя пользователя" required><br>' +
-        ' <input type="password" name="password" placeholder="Пароль" required><br>' +
-        ' <input type="submit" value="Зарегистрироваться">' +
-        '</form>');
+    res.render('register', { pageTitle: 'Регистрация' });
+});
+
+router.get('/login', (req, res) => {
+    res.render('login', { pageTitle: 'Вход в программу' });
 });
 
 
 // Роут для обработки данных формы регистрации
 router.post('/register', (req, res) => {
-    const { username, password } = req.body;
-    // Проверяем, не существует ли уже пользователя с таким именем
-    connection.query('SELECT * FROM users WHERE username = ?', [username], (error, results) => {
+    const { name, login, password } = req.body;
+    const validationErrors = validateLoginInput(login, password);
+
+    if (validationErrors.length > 0) {
+        req.flash('error_msg', validationErrors);
+        return res.redirect('/register');
+    }
+
+    connection.query('SELECT * FROM users WHERE login = ?', [login], async (error, results) => {
         if (error) {
             throw error;
         }
         if (results.length > 0) {
-            res.send('Пользователь с таким именем уже существует');
+            req.flash('error_msg', 'Пользователь с таким именем уже существует');
+            res.redirect('/register');
         } else {
-            // Добавляем нового пользователя в базу данных
-            connection.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password], (error, result) => {
-                if (error) {
-                    throw error;
-                }
-                res.send('Регистрация прошла успешно. <a href="/login">Войти</a>');
-            });
+            try {
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(password, salt);
+
+                connection.query('INSERT INTO users (name, login, password) VALUES (?, ?, ?)', [name, login, hashedPassword], (error, result) => {
+                    if (error) {
+                        throw error;
+                    }
+                    req.flash('success_msg', 'Регистрация прошла успешно. Теперь вы можете войти.');
+                    res.redirect('/login');
+                });
+            } catch (err) {
+                console.error(err);
+                req.flash('error_msg', 'Произошла ошибка при хэшировании пароля');
+                res.redirect('/register');
+            }
         }
     });
 });
@@ -47,29 +92,47 @@ router.post('/register', (req, res) => {
 
 // Роут для страницы авторизации / регистрации
 router.get('/login', (req, res) => {
-    res.render('login', { pageTitle: 'Авторизация / Регистрация' });
+    res.render('login', { pageTitle: 'Вход в программу' });
 });
 
 
 // Роут для обработки данных формы авторизации
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
-    // Ищем пользователя в базе данных
-    connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (error, results) => {
+    const validationErrors = validateLoginInput(username, password);
+
+    if (validationErrors.length > 0) {
+        req.flash('error_msg', validationErrors);
+        return res.redirect('/login');
+    }
+
+    // Ищем пользователя в базе данных по имени пользователя
+    connection.query('SELECT * FROM users WHERE login = ?', [username], async (error, results) => {
         if (error) {
             throw error;
         }
         if (results.length > 0) {
-            // Пользователь существует и аутентификация прошла успешно
             const authenticatedUser = results[0];
-            req.session.username = authenticatedUser.username;
-            req.session.userId = authenticatedUser.id;
-            res.redirect('/user');
+
+            // Сравниваем введенный пароль с хэшированным паролем из базы данных
+            const isMatch = await bcrypt.compare(password, authenticatedUser.password);
+
+            if (isMatch) {
+                // Пользователь существует и аутентификация прошла успешно
+                req.session.username = authenticatedUser.name;
+                req.session.userId = authenticatedUser.id;
+                res.redirect('/user');
+            } else {
+                req.flash('error_msg', 'Неправильное имя пользователя или пароль');
+                res.redirect('/login');
+            }
         } else {
-            res.send('Неправильное имя пользователя или пароль');
+            req.flash('error_msg', 'Неправильное имя пользователя или пароль');
+            res.redirect('/login');
         }
     });
 });
+
 
 
 // Основной роут приложения
@@ -77,7 +140,7 @@ router.get('/user', (req, res) => {
     const username = req.session.username; // Получаем имя пользователя из сеанса
     const userid = req.session.userId;
     if (userid) {
-        res.render('user', { userid: userid, username: username, pageTitle: "ru-ello"});
+        res.render('user', { userid: userid, username: username, pageTitle: "Ru-ello"});
     } else {
         res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу авторизации
     }

@@ -1,11 +1,23 @@
 <%- include('header', {title: pageTitle}) %>
 
-<h1><%= pageTitle %></h1>
+<div class="login-wrapper">
+    <div class="login-form">
+        <h1 class="title">Планировщик задач</h1>
+        <% if (error_msg && error_msg.length > 0) { %>
+            <% error_msg.forEach(function(msg) { %>
+                <div class="error"><%= msg %></div>
+            <% }) %>
+        <% } %>
+        <form class="form-control" action="/login" method="post">
+            <input class="form-control m-2" type="text" name="username" placeholder="Имя пользователя" required="">
+            <input class="form-control m-2"  type="password" name="password" placeholder="Пароль" required="">
+            <button type="submit" class="btn btn-dark col-12 m-2">
+                Войти
+            </button>
+        </form>
+        <p>Нет учетной записи?  <a href="/register"> Зарегистрироваться </a></p>
 
-<form action="/login" method="post">
-    <input type="text" name="username" placeholder="Имя пользователя" required><br>
-    <input type="password" name="password" placeholder="Пароль" required><br>
-    <input type="submit" value="Войти">
-</form>
+    </div>
+</div>
 
 <%- include('footer') %>

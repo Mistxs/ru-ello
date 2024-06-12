@@ -10,15 +10,6 @@ board.addEventListener('click', (event) => {
         }
     }
 
-    if (event.target.classList.contains('delete-board')) {
-        if (confirm('Вы действительно хотите удалить доску?')) {
-            boardid = document.getElementById('board');
-            clearBoard();
-            socket.emit('deleted-board', {boardid: boardid.getAttribute("boardid")});
-            displayBoards();
-        }
-    }
-
 
     if (event.target.classList.contains('delete-column')) {
         if (confirm('Вы действительно хотите удалить очередь?')) {
@@ -106,7 +97,7 @@ function addtask(target) {
 function addColumn(){
     const board = document.querySelector('.board');
     const columnNameInput = board.querySelector('.column-name');
-    const addColumnForm = board.querySelector('.add-column-form');
+    const addColumnForm = board.querySelector('.col-wrapper-fixed');
     const newColumn = document.createElement('div');
     newColumn.classList.add('col-wrapper');
 
@@ -124,7 +115,7 @@ function addColumn(){
                     </div>
                 </div>
             </div>  
-            <h2>${column.title}</h2>
+            <h2>${columnNameInput.value}</h2>
             <div class="column" cid="new" id="${columnNameInput.value.toLowerCase().replace(/\s/g, '-')}">
             </div>
             `;
@@ -138,7 +129,28 @@ function addColumn(){
     columnNameInput.value = '';
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
     displayBoards();
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+});
+
+document.querySelector('.boardname').addEventListener('keydown', function(event) {
+    if (event.keyCode === 13) { // Код клавиши Enter равен 13
+        addboard(); // Вызываем функцию добавления доски
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('keydown', function(event) {
+        if (event.target.classList.contains('column-name') && event.keyCode === 13) {
+            addColumn();
+        }
+    });
+});
+
+document.querySelector('.logout').addEventListener('click', function (event) {
+    event.preventDefault();
+    document.getElementById('logoutForm').submit();
 });

@@ -1,0 +1,27 @@
+<%- include('header', {title: pageTitle}) %>
+
+<div class="login-wrapper">
+    <div class="login-form">
+        <h1 class="title">Планировщик задач</h1>
+        <h5>Регистрация</h5>
+        <% if (error_msg && error_msg.length > 0) { %>
+            <% error_msg.forEach(function(msg) { %>
+                <div class="error"><%= msg %></div>
+            <% }) %>
+        <% } %>
+        <form class="form-control"  action="/register" method="post">
+            <input class="form-control m-2" type="text" name="name" placeholder="Имя" required>
+            <input class="form-control m-2" type="text" name="login" placeholder="Логин" required>
+            <input class="form-control m-2" type="password" name="password" placeholder="Пароль" required>
+
+            <button type="submit" class="btn btn-warning col-12 m-2">
+                Зарегистрироваться
+            </button>
+        </form>
+
+        <p>Уже зарегистрированы? <a href="/login"> Войти </a></p>
+
+    </div>
+</div>
+
+<%- include('footer') %>
