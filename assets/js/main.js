@@ -1,5 +1,5 @@
 const board = document.querySelector('.board-wrapper');
-const socket = io('http://localhost:3600');
+const socket = io({ transports: ['websocket'] });
 
 board.addEventListener('click', (event) => {
     
