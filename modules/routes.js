@@ -181,16 +181,180 @@ router.get('/columns/:boardId', (req, res) => {
     });
 });
 
-// Получение задач для выбранной доски
+// Получение задач для выбранной доски с информацией о бейджах и с сортировкой
 router.get('/tasks/:boardId', (req, res) => {
     const boardId = req.params.boardId;
-    const query = `SELECT * FROM tasks WHERE board_id = ? and deleted = 0 order by column_id, weight asc `;
+    const query = `
+        SELECT t.id, t.title, t.column_id, t.weight, b.id as badge_id, b.name, b.type
+        FROM tasks t
+        LEFT JOIN task_badges_link tbl ON t.id = tbl.taskid
+        LEFT JOIN badges b ON tbl.badge_id = b.id
+        WHERE t.board_id = ? AND t.deleted = 0
+        ORDER BY t.column_id, t.weight ASC
+    `;
     connection.query(query, [boardId], (err, results) => {
-        if (err) throw err;
-        res.json(results);
+        if (err) {
+            console.error('Error fetching tasks:', err);
+            res.status(500).json({ error: 'Failed to fetch tasks' });
+            return;
+        }
+
+        // Группировка результатов по задачам с их бейджами
+        const tasks = {};
+        results.forEach(row => {
+            if (!tasks[row.id]) {
+                tasks[row.id] = {
+                    taskid: row.id,
+                    title: row.title,
+                    column_id: row.column_id,
+                    weight: row.weight,
+                    badges: []
+                };
+            }
+            if (row.badge_id) { // если есть бейдж для текущей задачи
+                tasks[row.id].badges.push({
+                    id: row.badge_id,
+                    name: row.name,
+                    type: row.type
+                });
+            }
+        });
+
+        // Преобразование объекта задач в массив для JSON-ответа, отсортированного по column_id и weight
+        const sortedTasks = Object.values(tasks).sort((a, b) => {
+            if (a.column_id === b.column_id) {
+                return a.weight - b.weight;
+            }
+            return a.column_id - b.column_id;
+        });
+
+        res.json(sortedTasks);
     });
 });
 
+
+
+// Получение доп инфо о карточке
+router.get('/task-info/:taskId', (req, res) => {
+    const taskId = req.params.taskId;
+
+    // Запрос для основной информации о задаче
+    const taskQuery = `SELECT t.title, t.description, t.createdate, t.deadline, c.title AS column_title
+                       FROM tasks t
+                       JOIN columns c ON t.column_id = c.id
+                       WHERE t.id = ?`;
+
+    // Запрос для бейджей
+    const badgeQuery = `SELECT b.id, b.name, b.type
+                        FROM task_badges_link tbl
+                        JOIN badges b ON tbl.badge_id = b.id
+                        WHERE tbl.taskid = ?`;
+
+    // Запрос для комментов
+    const commentQuery = `SELECT c.id, c.text, c.createdate
+                          FROM comments c
+                          WHERE c.task_id = ? AND c.deleted = 0`;
+
+    // Выполнение первого запроса
+    connection.query(taskQuery, [taskId], (err, taskResults) => {
+        if (err) throw err;
+
+        // Проверка на наличие результата
+        if (taskResults.length > 0) {
+            const task = taskResults[0];
+
+            // Выполнение второго запроса для бейджей
+            connection.query(badgeQuery, [taskId], (err, badgeResults) => {
+                if (err) throw err;
+
+                // Преобразование результатов бейджей
+                const badges = badgeResults.map(badge => ({
+                    id: badge.id,
+                    text: badge.name,
+                    type: badge.type
+                }));
+
+                // Выполнение третьего запроса для комментариев
+                connection.query(commentQuery, [taskId], (err, commentResults) => {
+                    if (err) throw err;
+
+                    // Преобразование результатов комментариев
+                    const comments = commentResults.map(comment => ({
+                        text: comment.text,
+                        createdate: comment.createdate,
+                        id: comment.id
+                    }));
+
+                    // Формирование результата в нужном формате
+                    const formattedTask = {
+                        taskid: taskId,
+                        title: task.title,
+                        description: task.description,
+                        cdate: task.createdate,
+                        deadline: task.deadline,
+                        column: task.column_title,
+                        badges: badges,
+                        comments: comments
+                    };
+
+                    res.json(formattedTask);
+                });
+            });
+        } else {
+            res.status(404).json({ message: 'Task not found' });
+        }
+    });
+});
+
+router.post('/task-info/:taskId/save', (req, res) => {
+    const taskId = req.params.taskId;
+    const deadline = req.body.deadline;
+    const comments = req.body.comments;
+    const description = req.body.description;
+
+    connection.query('UPDATE ruello.tasks SET deadline = ?, description = ? WHERE id = ?', [deadline, description, taskId], (error, result) => {
+        if (error) {
+            throw error;
+        }
+
+        // Получение текущих комментариев для задачи
+        connection.query('SELECT id FROM ruello.comments WHERE task_id = ? AND deleted = 0', [taskId], (error, rows) => {
+            if (error) {
+                throw error;
+            }
+
+            const currentCommentIds = rows.map(row => row.id);
+
+            // Обработка пришедших от клиента комментариев
+            comments.forEach(comment => {
+                if (comment.id === null) {
+                    // Это новый комментарий, добавляем его в базу данных
+                    connection.query('INSERT INTO ruello.comments (text, createdate, task_id) VALUES (?, ?, ?)',
+                        [comment.text, comment.datetime, taskId],
+                        (error, result) => {
+                            if (error) {
+                                throw error;
+                            }
+                        });
+                } else {
+                    // Помечаем старые комментарии как удаленные, если они не были обновлены
+                    if (!currentCommentIds.includes(comment.id)) {
+                        connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
+                            [taskId, comment.id],
+                            (error, result) => {
+                                if (error) {
+                                    throw error;
+                                }
+                            });
+                    }
+                }
+            });
+
+            // Отправляем успешный ответ клиенту
+            res.status(200).json({ message: 'Задача успешно сохранена' });
+        });
+    });
+});
 
 
 // Роут для выхода

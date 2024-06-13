@@ -106,7 +106,6 @@ function displayBoards() {
                     // Изменяем заголовок доски
                     const boardTitle = document.querySelector('.board-title');
                     boardTitle.innerHTML = listItem.textContent.trim();
-                    console.log(boardTitle);
                 });
 
                 // Слушатель для показа иконки при наведении
@@ -182,16 +181,24 @@ function displayTasks(tasks) {
     tasks.forEach(task => {
         const column = document.querySelector(`[cid="${task.column_id}"]`);
         if (column) {
-            
             const taskDiv = document.createElement('div');
             taskDiv.classList.add('task');
-            taskDiv.setAttribute("task_id", task.id);
+            taskDiv.setAttribute("task_id", task.taskid); // используем taskid вместо id
             taskDiv.innerHTML = `
-                    <span class="badge badge-primary"></span>
-                    <div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${task.title}</div>
-                    <button class="btn delete-task"><i class="bx bx-trash"></i></button>
-                   
+                <div class="badge-lists"></div>
+                <div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${task.title}</div>
+                <button class="btn delete-task"><i class="bx bx-trash"></i></button>
             `;
+
+            // Добавляем бейджи
+            const badgeList = taskDiv.querySelector('.badge-lists');
+            task.badges.forEach(badge => {
+                const badgeElement = document.createElement('span');
+                badgeElement.classList.add('badge', `badge-${badge.type}`, 'm-1');
+                badgeElement.textContent = badge.name; // выводим имя бейджа
+                badgeList.appendChild(badgeElement);
+            });
+
             column.appendChild(taskDiv);
         } else {
             console.error(`Column with id ${task.column_id} not found.`);

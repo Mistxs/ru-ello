@@ -1,5 +1,6 @@
 const socketIO = require('socket.io');
-const connection = require('./db_connect'); // Импорт модуля подключения к базе данных
+const connection = require('./db_connect');
+const result = require("mysql/lib/protocol/packets/OkPacket"); // Импорт модуля подключения к базе данных
 
 
 function handleSockets(http) {
@@ -38,6 +39,100 @@ function handleSockets(http) {
                 console.log('Задача успешно удалена');
             });
         });
+
+        socket.on('rename-task', (data) => {
+            const taskId = parseInt(data.task);
+            const name = data.name;
+            connection.query('UPDATE ruello.tasks t SET t.title = ? WHERE t.id = ?', [name, taskId], (error, result) => {
+                if (error) {
+                    throw error;
+                }
+                console.log('Задача успешно удалена');
+            });
+        });
+
+        socket.on('update-current-task', (data) => {
+            const taskId = parseInt(data.taskId);
+
+            const taskQuery = `SELECT t.title
+                       FROM tasks t
+                       WHERE t.id = ?`;
+
+            const badgeQuery = `SELECT b.id, b.name, b.type
+                        FROM task_badges_link tbl
+                        JOIN badges b ON tbl.badge_id = b.id
+                        WHERE tbl.taskid = ?`;
+
+            connection.query(taskQuery, [taskId], (err, taskResults) => {
+                if (err) throw err;
+
+                // Проверка на наличие результата
+                if (taskResults.length > 0) {
+                    const tasktitle = taskResults[0];
+
+                    // Выполнение второго запроса для бейджей
+                    connection.query(badgeQuery, [taskId], (err, badgeResults) => {
+                        if (err) throw err;
+
+                        // Преобразование результатов бейджей
+                        const badges = badgeResults.map(badge => ({
+                            id: badge.id,
+                            text: badge.name,
+                            type: badge.type
+                        }));
+
+                            // Формирование результата в нужном формате
+                            const formattedTask = {
+                                taskid: taskId,
+                                title: tasktitle,
+                                badges: badges
+                            };
+
+                            socket.emit('update-current-task', {"data": formattedTask});
+                        });
+
+                }
+            });
+        });
+
+        socket.on('remove-label', (data) => {
+            const taskId = parseInt(data.task_id);
+            const badge_id = parseInt(data.badge_id);
+            connection.query('DELETE FROM task_badges_link where taskid = ? and badge_id = ?', [taskId, badge_id], (error, result) => {
+                if (error) {
+                    throw error;
+                }
+                console.log('Задача успешно удалена');
+            });
+        });
+
+        socket.on('add-label', (data) => {
+            const taskId = parseInt(data.task_id);
+            const name = data.labeltext;
+            const type = data.type;
+
+            // Первый запрос: вставка в таблицу badges
+            connection.query('INSERT INTO badges (name, type) VALUES (?, ?)', [name, type], (error, result) => {
+                if (error) {
+                    throw error;
+                }
+
+                console.log('Запись успешно добавлена в таблицу badges');
+
+                // После успешной вставки в таблицу badges выполняем второй запрос
+                // Второй запрос: вставка в таблицу task_badges_link
+                const badgeId = result.insertId; // получаем ID вставленной записи в таблице badges
+
+                connection.query('INSERT INTO task_badges_link (taskid, badge_id) VALUES (?, ?)', [taskId, badgeId], (error, result) => {
+                    if (error) {
+                        throw error;
+                    }
+
+                    console.log('Запись успешно добавлена в таблицу task_badges_link');
+                });
+            });
+        });
+
 
         socket.on('add-column', (data) => {
             console.log('Новая очередь:', data);

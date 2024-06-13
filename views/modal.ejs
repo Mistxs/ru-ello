@@ -3,18 +3,72 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel">Modal title</h5>
+                <h5 class="modal-title" id="staticBackdropLabel">
+                    <span id="task-title" class="modal-task-title"></span>
+                    <input type="text" id="edit-input" style="display: none;" class="form-control">
+                    <span id="edit-icon" style="cursor: pointer; margin-left: 10px;">✏️</span>
+                </h5>
+
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
+            <div class="form-group ctime">
+                <p class="col-6 coltitle"></p>
+                <div class="col-6 timing text-right cdate">
+                    <p id="created-time" class="">11-06-2024 11:23:21</p>
+                    <p id="elapsed-time" class=""><span class="badge-danger">02:123</span></p>
+                </div>
+            </div>
             <div class="modal-body">
-                ...
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="task-description">Описание задачи</label>
+                    <textarea class="form-control" id="task-description" rows="5"></textarea>
+                </div>
+
+
+                <!-- Labels (Badges) -->
+                <div class="form-group">
+                    <label for="task-labels">Метки</label>
+                    <div id="task-labels" class="d-flex flex-wrap">
+                        <!-- Existing badges will be dynamically added here -->
+                        <div class="dropdown">
+                            <button type="button" id="add-label-btn" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">+</button>
+                            <div class="dropdown-menu p-3" id="add-label-dropdown">
+                                <input type="text" id="new-label-text" class="form-control mb-2" placeholder="Label text">
+                                <select id="new-label-type" class="form-control mb-2">
+                                    <option value="success">Success</option>
+                                    <option value="danger">Danger</option>
+                                    <option value="warning">Warning</option>
+                                </select>
+                                <button type="button" id="add-new-label" class="btn btn-primary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Deadline -->
+                <div class="form-group">
+                    <label for="task-deadline">Срок выполнения</label>
+                    <input type="datetime-local" class="form-control" id="task-deadline">
+                </div>
+
+                <!-- Comment -->
+                <div class="form-group">
+                    <label for="task-comment">Комментарий</label>
+                    <div id="comment-list"></div>
+                    <textarea class="form-control" id="task-comment" rows="3"></textarea>
+                    <button type="button" class="btn btn-dark mt-2" onclick="addComment()">Добавить комментарий</button>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Understood</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="save-task" onclick="saveTask()">Сохранить</button>
             </div>
         </div>
     </div>
 </div>
+
+

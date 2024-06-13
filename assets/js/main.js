@@ -10,6 +10,11 @@ board.addEventListener('click', (event) => {
         }
     }
 
+    if (event.target.classList.contains('task-title')) {
+        const taskId = event.target.parentNode.getAttribute('task_id');
+        taskInfo(taskId);
+    }
+
 
     if (event.target.classList.contains('delete-column')) {
         if (confirm('Вы действительно хотите удалить очередь?')) {
@@ -37,7 +42,7 @@ function addtask(target) {
     // Добавление разметки для карточки задачи
     newTask.innerHTML = `
         <span class="badge"></span>
-        <textarea class="task-title" rows="1"></textarea>
+        <textarea class="task-title" rows="1" data-toggle="modal" data-target="#staticBackdrop"></textarea>
         <button class="btn delete-task"><i class="bx bx-trash"></i></button>
     `;
 
@@ -75,9 +80,9 @@ function addtask(target) {
         } else {
             // Если нужно, преобразовать textarea обратно в div с текстом
             let taskTitleDiv = document.createElement('div');
-            taskTitleDiv.className = 'task-title';
-            taskTitleDiv.textContent = editedTaskTitle;
-            newTask.replaceChild(taskTitleDiv, this);
+            taskTitleDiv.innerHTML = `<div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${editedTaskTitle}</div>`;
+            newTask.replaceChild(taskTitleDiv.firstChild, this);
+
 
             let boardId = board.querySelector('.board').getAttribute("boardId");
             let columnId = target.getAttribute('cid');
