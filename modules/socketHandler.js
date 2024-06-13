@@ -51,6 +51,21 @@ function handleSockets(http) {
             });
         });
 
+        socket.on('move-column', (data) => {
+            const columnId = parseInt(data.columnId);
+            const boardId = parseInt(data.boardId);
+            connection.query('UPDATE ruello.columns t SET t.board_id = ? WHERE t.id = ?', [boardId, columnId], (error, result) => {
+                if (error) {
+                    throw error;
+                }
+                connection.query('UPDATE ruello.tasks t SET t.board_id = ? WHERE t.column_id = ?', [boardId, columnId], (error, result) => {
+                    if (error) {
+                        throw error;
+                    } });
+                console.log('Очередь успешно перемещена');
+            });
+        });
+
         socket.on('update-current-task', (data) => {
             const taskId = parseInt(data.taskId);
 

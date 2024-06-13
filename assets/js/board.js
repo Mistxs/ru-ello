@@ -18,6 +18,8 @@ function initializeboard(){
         </div>`;
 }
 
+let board_items = [];
+
 function addboard(){
     const addboard = document.querySelector('.add-board');
     const boardNameInput = addboard.querySelector('input');
@@ -64,6 +66,7 @@ function displayBoards() {
     fetch('/boards')
         .then(response => response.json())
         .then(boards => {
+            board_items = boards;
             let boardlists = document.querySelector('.list-group');
             boardlists.innerHTML = "";
             const boardListContainer = document.querySelector('.boardList ul');
@@ -152,6 +155,7 @@ function displayColumns(columns, boardId) {
     columns.forEach(column => {
         const colWrapper = document.createElement('div');
         colWrapper.classList.add('col-wrapper');
+
         colWrapper.innerHTML = `
             <div class="row justify-content-between">
                 <span class="handle col"><i class="bx bxs-grid"></i></span>
@@ -162,7 +166,7 @@ function displayColumns(columns, boardId) {
                     <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(15px, 38px, 0px); top: 0px; left: 0px; will-change: transform;">
                         <a class="dropdown-item delete-column" href="#">Удалить очередь</a>
                         <a class="dropdown-item add-task" href="#">Создать задачу</a>
-                        <a class="dropdown-item move-col" href="#">Перенести на доску</a>
+                        <a class="dropdown-item move-col" href="#" data-toggle="modal" data-target="#move-column" onclick="getboard(${column.id})">Перенести на доску</a>
                     </div>
                 </div>
             </div>  
@@ -204,4 +208,32 @@ function displayTasks(tasks) {
             console.error(`Column with id ${task.column_id} not found.`);
         }
     });
+}
+
+
+function getboard(id) {
+    const selector = document.getElementById('boardSelector');
+    coltitle.setAttribute("col_id", id);
+    let title = document.querySelector(`.column[cid="${id}"]`).getAttribute('id');
+    coltitle.textContent = title;
+
+    selector.innerHTML = '';
+
+    board_items.forEach(board => {
+        if (board.deleted === 0) {  // Only include non-deleted boards
+            const option = document.createElement('option');
+            option.value = board.id;
+            option.textContent = board.title;
+            selector.appendChild(option);
+        }
+    });
+}
+
+function movecol() {
+    const selector = document.getElementById('boardSelector');
+    const coltitle = document.getElementById('coltitle');
+    const colid = coltitle.getAttribute("col_id");
+        socket.emit('move-column', {columnId: colid, boardId: selector.value});
+    let column = document.querySelector(`.column[cid="${colid}"]`).parentNode;
+    column.remove();
 }

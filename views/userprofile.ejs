@@ -1,23 +1,31 @@
 
-
 <div class="sidebar">
-    <%- include('version') %>
-    <h1>Добро пожаловать, <%= username %></h1>
-    <form id="logoutForm" action="/logout" method="post">
-        <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
-            <i class="bx bx-power-off me-2 logout" ></i>
-        </button>
+    <div class="sidebar-content">
+        <%- include('version') %>
+        <h1>Добро пожаловать, <%= username %></h1>
+        <form id="logoutForm" action="/logout" method="post">
+            <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
+                <i class="bx bx-power-off me-2 logout" ></i>
+            </button>
 
-    </form>
+        </form>
 
-    <hr>
-    <div class="boardList">
-        <ul class="list-group"></ul>
+        <hr>
+        <div class="boardList">
+            <ul class="list-group"></ul>
+        </div>
+
+
+
     </div>
-    <hr>
-
-    <div class="add-board">
-        <input type="text" placeholder="Добавить новую доску" class="form-control boardname">
-        <button class="btn btn-success" onclick="addboard();">Добавить доску</button>
+    <div class="sidebar-bottom">
+        <hr>
+        <div class="add-board">
+            <input type="text" placeholder="Добавить новую доску" class="form-control boardname">
+            <button class="btn btn-success" onclick="addboard();">Добавить доску</button>
+        </div>
+        <div class="recycle">
+            <a href="/restore"> <p>Восстановление удаленных <i class="bx bx-recycle me-2"></i></p></a>
+        </div>
     </div>
 </div>

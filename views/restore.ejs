@@ -1,0 +1,67 @@
+<%- include('header', {title: pageTitle}) %>
+
+
+<div class="sidebar">
+    <div class="sidebar-content">
+        <%- include('version') %>
+        <h1>Добро пожаловать, <%= username %></h1>
+        <form id="logoutForm" action="/logout" method="post">
+            <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
+                <i class="bx bx-power-off me-2 logout" ></i>
+            </button>
+
+        </form>
+
+        <hr>
+        <h6>Восстановление</h6>
+        <div class="boardList">
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-action" data-entity="boards">Доски задач</li>
+                <li class="list-group-item list-group-item-action" data-entity="columns">Очереди</li>
+                <li class="list-group-item list-group-item-action" data-entity="tasks">Задачи</li>
+                <li class="list-group-item list-group-item-action" data-entity="comments">Комментарии</li>
+            </ul>
+        </div>
+
+
+
+    </div>
+    <div class="sidebar-bottom">
+        <hr>
+        <div class="add-board">
+            <a href="/user" class="btn btn-success">Вернуться в приложение</a>
+        </div>
+        <div class="recycle">
+            <a href="/restore"> <p>Восстановление удаленных <i class="bx bx-recycle me-2"></i></p></a>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="card bg-dark text-white mb-2 p-2">
+        <p>Логика отображения удаленных сущностей следующая: показываются те элементы, которые можно восстановить
+        на активную доску > очередь > задачу.
+        </p>
+        <p>
+            Например, если вы не можете найти вашу задачу в списке удаленных, то попробуйте восстановить ее очередь или
+            доску.
+        </p>
+    </div>
+    <div class="entity-table">
+        <!-- Здесь будет отображаться таблица с данными -->
+    </div>
+</div>
+
+
+
+<%- include('modal') %>
+
+
+<script src="/assets/js/jquery-1.10.2.min.js"></script>
+<script src="/assets/js/bootstrap.bundle.min.js"></script>
+<script src="/node_modules/socket.io/client-dist/socket.io.min.js"></script>
+<script src="/assets/js/restore.js"></script>
+
+
+</body>
+</html>

@@ -34,6 +34,15 @@ router.use((req, res, next) => {
     next();
 });
 
+// Middleware для проверки авторизации
+function requireAuth(req, res, next) {
+    if (req.session.userId) {
+        next();
+    } else {
+        res.status(403).send('Доступ запрещен');
+    }
+}
+
 
 // Роут для стартовой страницы
 router.get('/', (req, res) => {
@@ -134,7 +143,6 @@ router.post('/login', (req, res) => {
 });
 
 
-
 // Основной роут приложения
 router.get('/user', (req, res) => {
     const username = req.session.username; // Получаем имя пользователя из сеанса
@@ -145,6 +153,177 @@ router.get('/user', (req, res) => {
         res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу авторизации
     }
 });
+
+// Рендер страницы восстановления удаленных
+router.get('/restore', (req, res) => {
+    const username = req.session.username; // Получаем имя пользователя из сеанса
+    const userid = req.session.userId;
+    if (userid) {
+        res.render('restore', { userid: userid, username: username, pageTitle: "Восстановление удаленных"});
+    } else {
+        res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу авторизации
+    }
+});
+
+// Показ удаленных сущностей
+router.get('/restore/:entity', requireAuth, (req, res) => {
+    const userId = req.session.userId;
+    const entity = req.params.entity;
+
+    if (entity === 'tasks') {
+        // Запрос для восстановления удаленных задач
+        const query = `
+            SELECT t.id as 'id', t.title AS 'Название задачи', c.title AS 'Очередь'
+            FROM tasks t
+            JOIN boards b ON t.board_id = b.id
+            JOIN columns c ON t.column_id = c.id
+            WHERE t.deleted = 1 AND b.deleted = 0 AND c.deleted = 0 AND b.user_id = ?
+        `;
+
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.json(results); // Отправляем результаты запроса в формате JSON
+        });
+    }
+    else if (entity === 'columns') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            select c.id as 'id', c.title as 'Название очереди', b.title as 'Название доски'
+            from columns c
+            join boards b on c.board_id = b.id
+            where c.deleted = 1 and b.user_id = ? and b.deleted = 0
+        `;
+
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.json(results); // Отправляем результаты запроса в формате JSON
+        });
+    }
+
+    else if (entity === 'boards') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            select id, title as 'Название' from boards where deleted = 1 and user_id = ?
+        `;
+
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.json(results); // Отправляем результаты запроса в формате JSON
+        });
+    }
+
+    else if (entity === 'comments') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            select c.id as 'id', c.text as 'Комментарий', c.createdate as 'Дата создания', t.title as 'Название задачи'
+            from comments c
+            join tasks t on c.task_id = t.id
+            join boards b on t.board_id = b.id
+            where c.deleted = 1 and t.deleted = 0 and b.deleted = 0 and b.user_id = ?
+        `;
+
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.json(results); // Отправляем результаты запроса в формате JSON
+        });
+    }
+
+    else {
+        res.status(400).send('Неправильный тип сущности'); // Ошибка 400, если тип сущности не поддерживается
+    }
+});
+
+// Восстановление удаленной сущности
+router.post('/restoreEntity/:entity/:id', requireAuth, (req, res) => {
+    const userId = req.session.userId;
+    const entity = req.params.entity;
+    const id = req.params.id;
+
+    if (entity === 'tasks') {
+        // Запрос для восстановления удаленных задач
+        const query = `
+            update tasks set deleted = 0 where id = ?
+        `;
+
+        connection.query(query, [id], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.status(202).json({"status": "ok"});
+        });
+    }
+    else if (entity === 'columns') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            update columns set deleted = 0 where id = ?
+        `;
+
+        connection.query(query, [id], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.status(202).json({"status": "ok"});
+        });
+    }
+
+    else if (entity === 'boards') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            update boards set deleted = 0 where id = ?
+        `;
+
+        connection.query(query, [id], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.status(202).json({"status": "ok"});
+        });
+    }
+
+    else if (entity === 'comments') {
+        // Запрос для восстановления удаленных очередей
+        const query = `
+            update comments set deleted = 0 where id = ?
+        `;
+
+        connection.query(query, [id], (err, results) => {
+            if (err) {
+                console.error('Ошибка выполнения запроса:', err);
+                res.status(500).send('Произошла ошибка на сервере');
+                return;
+            }
+            res.status(202).json({"status": "ok"});
+        });
+    }
+
+    else {
+        res.status(400).send('Неправильный тип сущности'); // Ошибка 400, если тип сущности не поддерживается
+    }
+});
+
+
 
 // Получение списка досок пользователя
 router.get('/boards', (req, res) => {
@@ -306,6 +485,7 @@ router.get('/task-info/:taskId', (req, res) => {
     });
 });
 
+// сохранение карточки
 router.post('/task-info/:taskId/save', (req, res) => {
     const taskId = req.params.taskId;
     const deadline = req.body.deadline;
@@ -326,29 +506,41 @@ router.post('/task-info/:taskId/save', (req, res) => {
             const currentCommentIds = rows.map(row => row.id);
 
             // Обработка пришедших от клиента комментариев
-            comments.forEach(comment => {
-                if (comment.id === null) {
-                    // Это новый комментарий, добавляем его в базу данных
-                    connection.query('INSERT INTO ruello.comments (text, createdate, task_id) VALUES (?, ?, ?)',
-                        [comment.text, comment.datetime, taskId],
-                        (error, result) => {
-                            if (error) {
-                                throw error;
-                            }
-                        });
-                } else {
-                    // Помечаем старые комментарии как удаленные, если они не были обновлены
-                    if (!currentCommentIds.includes(comment.id)) {
-                        connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
-                            [taskId, comment.id],
+            if (comments.length === 0) {
+                // Если список комментариев пуст, удаляем все комментарии для данной задачи
+                connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ?',
+                    [taskId],
+                    (error, result) => {
+                        if (error) {
+                            throw error;
+                        }
+                    });
+            } else {
+                comments.forEach(comment => {
+                    if (comment.id === null) {
+                        // Это новый комментарий, добавляем его в базу данных
+                        connection.query('INSERT INTO ruello.comments (text, createdate, task_id) VALUES (?, ?, ?)',
+                            [comment.text, comment.datetime, taskId],
                             (error, result) => {
                                 if (error) {
                                     throw error;
                                 }
                             });
+                    } else {
+                        // Помечаем комментарии как удаленные, если они не вернулись
+                        if (!currentCommentIds.includes(comment.id)) {
+                            connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
+                                [taskId, comment.id],
+                                (error, result) => {
+                                    if (error) {
+                                        throw error;
+                                    }
+                                });
+                        }
                     }
-                }
-            });
+                });
+            }
+
 
             // Отправляем успешный ответ клиенту
             res.status(200).json({ message: 'Задача успешно сохранена' });

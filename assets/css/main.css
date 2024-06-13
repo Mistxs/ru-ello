@@ -149,6 +149,9 @@ body {
     font-size: 1.5rem;
     color: antiquewhite;
 }
+.sidebar h6 {
+    color: antiquewhite;
+}
 .sidebar button {
     width: 100%;
     margin-top: 10px;
@@ -271,4 +274,34 @@ body {
 
 .badge-lists {
     padding-right: 20px;
+}
+
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Высота на всю страницу */
+}
+
+.sidebar-content {
+    flex: 1; /* Занимает все доступное пространство */
+    overflow-y: auto; /* Если нужно прокручивание для длинного контента */
+}
+
+.sidebar-bottom {
+    margin-top: auto; /* Перемещает блок вниз */
+}
+
+.recycle {
+    text-align: center;
+    padding: 40px 10px 10px;
+}
+
+.sidebar-bottom a {
+        color: #faead7;
+}
+
+.sidebar-bottom a:hover {
+    color: #eef6ff;
+    text-decoration: none;
 }
