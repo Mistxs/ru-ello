@@ -32,7 +32,7 @@ function handleSockets(http) {
         socket.on('deleted-task', (data) => {
             console.log('Удалена задача:', data);
             const taskId = parseInt(data.task);
-            connection.query('UPDATE ruello.tasks t SET t.deleted = 1 WHERE t.id = ?', [taskId], (error, result) => {
+            connection.query('UPDATE tasks t SET t.deleted = 1 WHERE t.id = ?', [taskId], (error, result) => {
                 if (error) {
                     throw error;
                 }
@@ -43,7 +43,7 @@ function handleSockets(http) {
         socket.on('rename-task', (data) => {
             const taskId = parseInt(data.task);
             const name = data.name;
-            connection.query('UPDATE ruello.tasks t SET t.title = ? WHERE t.id = ?', [name, taskId], (error, result) => {
+            connection.query('UPDATE tasks t SET t.title = ? WHERE t.id = ?', [name, taskId], (error, result) => {
                 if (error) {
                     throw error;
                 }
@@ -54,11 +54,11 @@ function handleSockets(http) {
         socket.on('move-column', (data) => {
             const columnId = parseInt(data.columnId);
             const boardId = parseInt(data.boardId);
-            connection.query('UPDATE ruello.columns t SET t.board_id = ? WHERE t.id = ?', [boardId, columnId], (error, result) => {
+            connection.query('UPDATE columns t SET t.board_id = ? WHERE t.id = ?', [boardId, columnId], (error, result) => {
                 if (error) {
                     throw error;
                 }
-                connection.query('UPDATE ruello.tasks t SET t.board_id = ? WHERE t.column_id = ?', [boardId, columnId], (error, result) => {
+                connection.query('UPDATE tasks t SET t.board_id = ? WHERE t.column_id = ?', [boardId, columnId], (error, result) => {
                     if (error) {
                         throw error;
                     } });
@@ -169,13 +169,13 @@ function handleSockets(http) {
         socket.on('deleted-column', (data) => {
             console.log('Удален столбец:', data);
             const cid = parseInt(data.cid);
-            connection.query('UPDATE ruello.columns t SET t.deleted = 1 WHERE t.id = ?', [cid], (error, result) => {
+            connection.query('UPDATE columns t SET t.deleted = 1 WHERE t.id = ?', [cid], (error, result) => {
                 if (error) {
                     throw error;
                 }
                 console.log('Успешно удалены столбцы в БД');
             });
-            connection.query('UPDATE ruello.tasks t SET t.deleted = 1 WHERE t.column_id = ?', [cid], (error, result) => {
+            connection.query('UPDATE tasks t SET t.deleted = 1 WHERE t.column_id = ?', [cid], (error, result) => {
                 if (error) {
                     throw error;
                 }
@@ -186,19 +186,19 @@ function handleSockets(http) {
         socket.on('deleted-board', (data) => {
             console.log('Удалена доска:', data);
             const bid = parseInt(data.boardid);
-            connection.query('UPDATE ruello.boards t SET t.deleted = 1 WHERE t.id = ?', [bid], (error, result) => {
+            connection.query('UPDATE boards t SET t.deleted = 1 WHERE t.id = ?', [bid], (error, result) => {
                 if (error) {
                     throw error;
                 }
                 console.log('Успешно удалена доска в БД');
             });
-            connection.query('UPDATE ruello.columns t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
+            connection.query('UPDATE columns t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
                 if (error) {
                     throw error;
                 }
                 console.log('Успешно удалены очереди в БД');
             });
-            connection.query('UPDATE ruello.tasks t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
+            connection.query('UPDATE tasks t SET t.deleted = 1 WHERE t.board_id = ?', [bid], (error, result) => {
                 if (error) {
                     throw error;
                 }
@@ -214,7 +214,7 @@ function handleSockets(http) {
             console.log('Перемещена задача:', data);
 
             // Выполняем запрос к базе данных MySQL
-            connection.query('UPDATE ruello.tasks t SET t.column_id = ? WHERE t.id = ?', [columnId, taskId], (error, result) => {
+            connection.query('UPDATE tasks t SET t.column_id = ? WHERE t.id = ?', [columnId, taskId], (error, result) => {
                 if (error) {
                     throw error;
                 }

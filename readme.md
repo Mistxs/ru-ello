@@ -11,16 +11,13 @@
     ```bash
     npm install
     ```
-3. Пропишите доступы к базе данных mysql в файл modules/db_connect.js
+3. Пропишите доступы к базе данных mysql в файл modules/db_config.js
     ```bash
-    nano modules/db_connect.js
+    nano modules/db_config.js
     ```
+   
+   _Рекомендуется заранее создать новую схему, и указать ее в файле конфигурации_
 
-
-4. Создайте таблицы в базе данных:
-    ```bash
-    npm run setupdb
-    ```
 
 4. Запустите проект:
     ```bash

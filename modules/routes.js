@@ -492,13 +492,13 @@ router.post('/task-info/:taskId/save', (req, res) => {
     const comments = req.body.comments;
     const description = req.body.description;
 
-    connection.query('UPDATE ruello.tasks SET deadline = ?, description = ? WHERE id = ?', [deadline, description, taskId], (error, result) => {
+    connection.query('UPDATE tasks SET deadline = ?, description = ? WHERE id = ?', [deadline, description, taskId], (error, result) => {
         if (error) {
             throw error;
         }
 
         // Получение текущих комментариев для задачи
-        connection.query('SELECT id FROM ruello.comments WHERE task_id = ? AND deleted = 0', [taskId], (error, rows) => {
+        connection.query('SELECT id FROM comments WHERE task_id = ? AND deleted = 0', [taskId], (error, rows) => {
             if (error) {
                 throw error;
             }
@@ -508,7 +508,7 @@ router.post('/task-info/:taskId/save', (req, res) => {
             // Обработка пришедших от клиента комментариев
             if (comments.length === 0) {
                 // Если список комментариев пуст, удаляем все комментарии для данной задачи
-                connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ?',
+                connection.query('UPDATE comments SET deleted = 1 WHERE task_id = ?',
                     [taskId],
                     (error, result) => {
                         if (error) {
@@ -519,7 +519,7 @@ router.post('/task-info/:taskId/save', (req, res) => {
                 comments.forEach(comment => {
                     if (comment.id === null) {
                         // Это новый комментарий, добавляем его в базу данных
-                        connection.query('INSERT INTO ruello.comments (text, createdate, task_id) VALUES (?, ?, ?)',
+                        connection.query('INSERT INTO comments (text, createdate, task_id) VALUES (?, ?, ?)',
                             [comment.text, comment.datetime, taskId],
                             (error, result) => {
                                 if (error) {
@@ -529,7 +529,7 @@ router.post('/task-info/:taskId/save', (req, res) => {
                     } else {
                         // Помечаем комментарии как удаленные, если они не вернулись
                         if (!currentCommentIds.includes(comment.id)) {
-                            connection.query('UPDATE ruello.comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
+                            connection.query('UPDATE comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
                                 [taskId, comment.id],
                                 (error, result) => {
                                     if (error) {

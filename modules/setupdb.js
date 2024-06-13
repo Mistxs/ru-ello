@@ -27,15 +27,17 @@ function setupDatabase() {
         {
             name: 'boards',
             query: `
-        CREATE TABLE IF NOT EXISTS boards (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NULL,
-          user_id INT NULL,
-          deleted TINYINT DEFAULT 0 NULL,
-          CONSTRAINT boards_users_id_fk
-            FOREIGN KEY (user_id) REFERENCES users (id)
-            ON UPDATE CASCADE ON DELETE SET NULL
-        )
+        CREATE TABLE IF NOT EXISTS boards
+        (
+            id      int auto_increment
+                primary key,
+            title   varchar(255)      null,
+            user_id int               null,
+            deleted tinyint default 0 null,
+            constraint boards_users_id_fk
+                foreign key (user_id) references users (id)
+                    on update cascade on delete set null
+        );
       `,
         },
         {
@@ -64,6 +66,8 @@ function setupDatabase() {
           column_id INT NULL,
           deleted TINYINT DEFAULT 0 NULL,
           weight INT NULL,
+          createdate  datetime default (now()) null,
+          deadline    datetime default (now()) null,
           CONSTRAINT tasks_boards_id_fk
             FOREIGN KEY (board_id) REFERENCES boards (id)
             ON UPDATE CASCADE ON DELETE CASCADE,
@@ -71,6 +75,54 @@ function setupDatabase() {
             FOREIGN KEY (column_id) REFERENCES columns (id)
             ON UPDATE CASCADE ON DELETE CASCADE
         )
+      `,
+        },
+        {
+            name: 'comments',
+            query: `
+        create table comments
+        (
+            id         int auto_increment
+                primary key,
+            text       text                               null,
+            createdate datetime default CURRENT_TIMESTAMP null,
+            task_id    int                                null,
+            deleted    tinyint  default 0                 null,
+            user_id    int                                null,
+            constraint task
+                foreign key (task_id) references tasks (id),
+            constraint user
+                foreign key (user_id) references users (id)
+        );
+      `,
+        },
+        {
+            name: 'badges',
+            query: `
+        create table badges
+        (
+            id      int auto_increment
+                primary key,
+            name    varchar(255) null,
+            deleted tinyint      null,
+            type    varchar(255) null
+        );
+      `,
+        },
+        {
+            name: 'badges-link',
+            query: `
+        create table task_badges_link
+        (
+            id       int auto_increment
+                primary key,
+            taskid   int null,
+            badge_id int null,
+            constraint badges_fk
+                foreign key (badge_id) references badges (id),
+            constraint task_fk
+                foreign key (taskid) references tasks (id)
+        );
       `,
         },
     ];
