@@ -1,12 +1,4 @@
-const mysql = require('mysql');
-
-// Настройки подключения к базе данных
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'ruello',
-    password: 'ruellopassword',
-    database: 'ruello'
-});
+const connection = require('./db_connect');
 
 // Соединение с базой данных
 connection.connect(err => {
