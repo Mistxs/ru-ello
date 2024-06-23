@@ -130,6 +130,7 @@ router.post('/login', (req, res) => {
                 // Пользователь существует и аутентификация прошла успешно
                 req.session.username = authenticatedUser.name;
                 req.session.userId = authenticatedUser.id;
+                req.session.role = authenticatedUser.role;
                 res.redirect('/user');
             } else {
                 req.flash('error_msg', 'Неправильное имя пользователя или пароль');
@@ -143,16 +144,22 @@ router.post('/login', (req, res) => {
 });
 
 
-// Основной роут приложения
 router.get('/user', (req, res) => {
-    const username = req.session.username; // Получаем имя пользователя из сеанса
+    const username = req.session.username;
     const userid = req.session.userId;
+    const userRole = req.session.role; // Предполагаем, что роль пользователя сохраняется в сеансе
     if (userid) {
-        res.render('user', { userid: userid, username: username, pageTitle: "Ru-ello"});
+        res.render('user', {
+            userid: userid,
+            username: username,
+            role: userRole, // Передаем роль в шаблон
+            pageTitle: "Ru-ello"
+        });
     } else {
-        res.redirect('/login'); // Если пользователь не авторизован, перенаправляем на страницу авторизации
+        res.redirect('/login');
     }
 });
+
 
 // Рендер страницы восстановления удаленных
 router.get('/restore', (req, res) => {
@@ -328,12 +335,19 @@ router.post('/restoreEntity/:entity/:id', requireAuth, (req, res) => {
 // Получение списка досок пользователя
 router.get('/boards', (req, res) => {
     const userId = req.session.userId;
-    const query = `SELECT * FROM boards WHERE user_id = ? AND deleted = 0`;
-    connection.query(query, [userId], (err, results) => {
+    const query = `
+        SELECT b.*, u.name as 'user_name'
+        FROM boards b
+        join users u on b.user_id = u.id
+        WHERE b.user_id = ? AND b.deleted = 0 
+        OR b.id IN (SELECT board_id FROM board_user_link WHERE user_id = ?)
+    `;
+    connection.query(query, [userId, userId], (err, results) => {
         if (err) throw err;
         res.json(results);
     });
 });
+
 
 router.post('/boards/create', (req, res) => {
     const userId = req.session.userId;
@@ -364,10 +378,11 @@ router.get('/columns/:boardId', (req, res) => {
 router.get('/tasks/:boardId', (req, res) => {
     const boardId = req.params.boardId;
     const query = `
-        SELECT t.id, t.title, t.column_id, t.weight, b.id as badge_id, b.name, b.type
+        SELECT t.id, t.title, t.column_id, t.weight, u.name AS assigned_user_name, b.id as badge_id, b.name, b.type
         FROM tasks t
         LEFT JOIN task_badges_link tbl ON t.id = tbl.taskid
         LEFT JOIN badges b ON tbl.badge_id = b.id
+        LEFT JOIN users u ON t.assigned_user_id = u.id
         WHERE t.board_id = ? AND t.deleted = 0
         ORDER BY t.column_id, t.weight ASC
     `;
@@ -387,6 +402,7 @@ router.get('/tasks/:boardId', (req, res) => {
                     title: row.title,
                     column_id: row.column_id,
                     weight: row.weight,
+                    assigned_user_name: row.assigned_user_name,
                     badges: []
                 };
             }
@@ -418,9 +434,10 @@ router.get('/task-info/:taskId', (req, res) => {
     const taskId = req.params.taskId;
 
     // Запрос для основной информации о задаче
-    const taskQuery = `SELECT t.title, t.description, t.createdate, t.deadline, c.title AS column_title
+    const taskQuery = `SELECT t.title, t.description, t.createdate, t.deadline, c.title AS column_title, t.assigned_user_id, u.name AS assigned_user_name
                        FROM tasks t
                        JOIN columns c ON t.column_id = c.id
+                       LEFT JOIN users u ON t.assigned_user_id = u.id
                        WHERE t.id = ?`;
 
     // Запрос для бейджей
@@ -430,8 +447,9 @@ router.get('/task-info/:taskId', (req, res) => {
                         WHERE tbl.taskid = ?`;
 
     // Запрос для комментов
-    const commentQuery = `SELECT c.id, c.text, c.createdate
+    const commentQuery = `SELECT c.id, c.text, c.createdate, c.user_id, u.name
                           FROM comments c
+                          left join users u on c.user_id = u.id
                           WHERE c.task_id = ? AND c.deleted = 0`;
 
     // Выполнение первого запроса
@@ -461,7 +479,8 @@ router.get('/task-info/:taskId', (req, res) => {
                     const comments = commentResults.map(comment => ({
                         text: comment.text,
                         createdate: comment.createdate,
-                        id: comment.id
+                        id: comment.id,
+                        username: comment.name,
                     }));
 
                     // Формирование результата в нужном формате
@@ -471,6 +490,8 @@ router.get('/task-info/:taskId', (req, res) => {
                         description: task.description,
                         cdate: task.createdate,
                         deadline: task.deadline,
+                        assigned_user_id: task.assigned_user_id,
+                        assigned_user_name: task.assigned_user_name,
                         column: task.column_title,
                         badges: badges,
                         comments: comments
@@ -485,12 +506,14 @@ router.get('/task-info/:taskId', (req, res) => {
     });
 });
 
+
 // сохранение карточки
 router.post('/task-info/:taskId/save', (req, res) => {
     const taskId = req.params.taskId;
     const deadline = req.body.deadline;
     const comments = req.body.comments;
     const description = req.body.description;
+    const userId = req.session.userId;
 
     connection.query('UPDATE tasks SET deadline = ?, description = ? WHERE id = ?', [deadline, description, taskId], (error, result) => {
         if (error) {
@@ -504,6 +527,8 @@ router.post('/task-info/:taskId/save', (req, res) => {
             }
 
             const currentCommentIds = rows.map(row => row.id);
+            let commentsfront = []
+            console.log(currentCommentIds);
 
             // Обработка пришедших от клиента комментариев
             if (comments.length === 0) {
@@ -519,26 +544,32 @@ router.post('/task-info/:taskId/save', (req, res) => {
                 comments.forEach(comment => {
                     if (comment.id === null) {
                         // Это новый комментарий, добавляем его в базу данных
-                        connection.query('INSERT INTO comments (text, createdate, task_id) VALUES (?, ?, ?)',
-                            [comment.text, comment.datetime, taskId],
+                        connection.query('INSERT INTO comments (text, createdate, task_id, user_id) VALUES (?, ?, ?, ?)',
+                            [comment.text, comment.datetime, taskId, userId],
                             (error, result) => {
                                 if (error) {
                                     throw error;
                                 }
                             });
                     } else {
-                        // Помечаем комментарии как удаленные, если они не вернулись
-                        if (!currentCommentIds.includes(comment.id)) {
-                            connection.query('UPDATE comments SET deleted = 1 WHERE task_id = ? AND id not in (?)',
-                                [taskId, comment.id],
-                                (error, result) => {
-                                    if (error) {
-                                        throw error;
-                                    }
-                                });
+                        commentsfront.push(parseInt(comment.id));
                         }
-                    }
                 });
+
+                const commentsToDelete = currentCommentIds.filter(commentId => !commentsfront.includes(commentId));
+
+                // Выполнить запрос на обновление
+                if (commentsToDelete.length > 0) {
+                    const placeholders = commentsToDelete.map(() => '?').join(',');
+                    const updateQuery = `UPDATE comments SET deleted = 1 WHERE task_id = ? AND id IN (${placeholders})`;
+
+                    connection.query(updateQuery, [taskId, ...commentsToDelete], (error, result) => {
+                        if (error) {
+                            throw error;
+                        }
+                        console.log(`Deleted ${result.affectedRows} comments`);
+                    });
+                }
             }
 
 
@@ -548,12 +579,82 @@ router.post('/task-info/:taskId/save', (req, res) => {
     });
 });
 
+router.post('/task-assign', (req, res) => {
+    const { taskId, userId } = req.body;
+
+    const assignUserQuery = `UPDATE tasks SET assigned_user_id = ? WHERE id = ?`;
+
+    connection.query(assignUserQuery, [userId, taskId], (err, result) => {
+        if (err) {
+            console.error('Error assigning user:', err);
+            res.status(500).send('Internal server error');
+        } else {
+            res.send('Task assigned successfully');
+        }
+    });
+});
+
+router.get('/task/users', (req, res) => {
+    const usersQuery = `SELECT id, name FROM users`;
+
+    connection.query(usersQuery, (err, results) => {
+        if (err) {
+            console.error('Error fetching users:', err);
+            res.status(500).send('Internal server error');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
 
 // Роут для выхода
 router.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) throw err;
         res.redirect('/login'); // Перенаправление на страницу авторизации
+    });
+});
+
+
+router.post('/users', (req, res) => {
+    const boardId = req.body.boardId;
+    const userId = req.session.userId;
+    const query = `
+        SELECT u.id, u.name, u.login,
+        CASE
+            WHEN bul.board_id IS NOT NULL THEN 1
+            ELSE 0
+        END AS is_linked
+        FROM users u
+        LEFT JOIN board_user_link bul ON u.id = bul.user_id AND bul.board_id = ? where u.id not in (?)
+    `;
+    connection.query(query, [boardId, userId], (err, results) => {
+        if (err) throw err;
+        res.json(results);
+    });
+});
+
+
+router.post('/boards/addUser', (req, res) => {
+    const userId  = req.body.userId;
+    const boardId = req.body.boardId;
+
+    const query = 'INSERT INTO board_user_link (board_id, user_id) VALUES (?, ?)';
+    connection.query(query, [boardId, userId], (err, results) => {
+        if (err) throw err;
+        res.json({ success: true });
+    });
+});
+
+router.post('/boards/removeUser', (req, res) => {
+    const userId  = req.body.userId;
+    const boardId = req.body.boardId;
+
+    const query = 'DELETE FROM board_user_link WHERE board_id = ? AND user_id = ?';
+    connection.query(query, [boardId, userId], (err, results) => {
+        if (err) throw err;
+        res.json({ success: true });
     });
 });
 

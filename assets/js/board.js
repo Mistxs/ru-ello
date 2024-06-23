@@ -70,60 +70,69 @@ function displayBoards() {
             let boardlists = document.querySelector('.list-group');
             boardlists.innerHTML = "";
             const boardListContainer = document.querySelector('.boardList ul');
+            const currentUser = parseInt(document.querySelector('.userinfo').getAttribute("userid"));
 
             boards.forEach(board => {
-                const listItemHTML = `
-                    <li class="list-group-item board-item" data-board-id="${board.id}">
+                const boardUserId = parseInt(board.user_id); // Приводим board.user_id к числовому типу
+                const sharedIcon = boardUserId !== currentUser ?
+                    `<div class="sharedicon" data-toggle="tooltip" data-placement="top" data-original-title="Доской поделился пользователь ${board.user_name}">
+                        <i class='bx bxs-share-alt'></i></div>` : '';
+
+                const listItemHTML =
+                    `<li class="list-group-item board-item" data-board-id="${board.id}">
                         ${board.title}
+                        ${sharedIcon}
                         <span class="delete-board" data-toggle="tooltip" data-placement="right" title="Удалить доску"><i class="bx bx-trash"></i></span>
-                    </li>
-                `;
+                    </li>`;
+
                 boardListContainer.innerHTML += listItemHTML;
             });
 
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            })
+
+            // После добавления элементов в DOM инициализируем tooltip для каждой иконки "поделилась доской"
+            boardListContainer.querySelectorAll('[data-toggle="tooltip"]').forEach(item => {
+                new bootstrap.Tooltip(item);
+            });
+
             document.querySelectorAll('.board-item').forEach(listItem => {
-                // Слушатель для удаления доски
+                listItem.addEventListener('click', () => {
+                    document.querySelectorAll('.board-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    listItem.classList.add('active');
+
+                    initializeboard();
+                    fetchColumnsAndTasks(listItem.dataset.boardId);
+
+                    const boardTitle = document.querySelector('.board-title');
+                    boardTitle.innerHTML = listItem.textContent.trim();
+                });
+
+                listItem.addEventListener('mouseenter', () => {
+                    listItem.querySelector('.delete-board').style.visibility = 'visible';
+
+                });
+
+                listItem.addEventListener('mouseleave', () => {
+                    listItem.querySelector('.delete-board').style.visibility = 'hidden';
+
+                });
+
                 listItem.querySelector('.delete-board').addEventListener('click', (event) => {
                     event.stopPropagation();
                     if (confirm('Вы действительно хотите удалить доску?')) {
                         clearBoard();
                         socket.emit('deleted-board', {boardid: listItem.dataset.boardId});
-                        displayBoards()
-                    };
-                });
-
-                // Слушатель для выбора доски
-                listItem.addEventListener('click', () => {
-                    // Удаляем класс active у всех элементов списка
-                    document.querySelectorAll('.board-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    // Добавляем класс active к текущему элементу списка
-                    listItem.classList.add('active');
-
-
-                    // Выполняем другие необходимые действи
-                    initializeboard();
-                    fetchColumnsAndTasks(listItem.dataset.boardId);
-
-                    // Изменяем заголовок доски
-                    const boardTitle = document.querySelector('.board-title');
-                    boardTitle.innerHTML = listItem.textContent.trim();
-                });
-
-                // Слушатель для показа иконки при наведении
-                listItem.addEventListener('mouseenter', () => {
-                    listItem.querySelector('.delete-board').style.visibility = 'visible';
-                });
-                listItem.addEventListener('mouseleave', () => {
-                    listItem.querySelector('.delete-board').style.visibility = 'hidden';
+                        displayBoards();
+                    }
                 });
             });
-
-
-
         });
 }
+
 
 // Функция для получения колонок и задач по boardId с бэка
 function fetchColumnsAndTasks(boardId) {
@@ -143,11 +152,6 @@ function fetchColumnsAndTasks(boardId) {
 
 function displayColumns(columns, boardId) {
     const board = document.querySelector('.board');
-    const boardTitle = document.querySelector('.board-title');
-    const deletebutton = document.createElement('button');
-    deletebutton.classList.add('delete-board');
-    deletebutton.textContent = 'Удалить доску';
-    boardTitle.appendChild(deletebutton);
 
     board.setAttribute("boardId", boardId);
     const addColumnForm = board.querySelector('.col-wrapper-fixed');
@@ -189,8 +193,13 @@ function displayTasks(tasks) {
             taskDiv.classList.add('task');
             taskDiv.setAttribute("task_id", task.taskid); // используем taskid вместо id
             taskDiv.innerHTML = `
+            <div class="task-wrapper">
                 <div class="badge-lists"></div>
-                <div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${task.title}</div>
+                <div class="task-title" data-toggle="modal" data-target="#staticBackdrop" >${task.title}</div>
+                <div class="task-user" style="display: flex; align-items: center;">
+                   ${task.assigned_user_name ? createAvatar(task.assigned_user_name) + `<span>${task.assigned_user_name}</span>` : ''}
+                </div>            
+            </div>
                 <button class="btn delete-task"><i class="bx bx-trash"></i></button>
             `;
 
@@ -236,4 +245,24 @@ function movecol() {
         socket.emit('move-column', {columnId: colid, boardId: selector.value});
     let column = document.querySelector(`.column[cid="${colid}"]`).parentNode;
     column.remove();
+}
+
+// Пполучение инициалов пользователя
+function getInitials(name) {
+    if (!name) return null;
+    const nameParts = name.split(' ');
+    const initials = nameParts.map(part => part[0].toUpperCase()).join('');
+    return initials;
+}
+
+// Создания HTML кода с аватаром и инициалами
+function createAvatar(name) {
+    const initials = getInitials(name);
+    if (!initials) return ''; // Если name null или пустой, вернем пустую строку
+
+    return `
+        <div class="avatar">
+            ${initials}
+        </div>
+    `;
 }

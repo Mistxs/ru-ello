@@ -69,8 +69,9 @@ function handleSockets(http) {
         socket.on('update-current-task', (data) => {
             const taskId = parseInt(data.taskId);
 
-            const taskQuery = `SELECT t.title
+            const taskQuery = `SELECT t.title, u.name
                        FROM tasks t
+                       LEFT JOIN users u ON t.assigned_user_id = u.id
                        WHERE t.id = ?`;
 
             const badgeQuery = `SELECT b.id, b.name, b.type
@@ -83,7 +84,8 @@ function handleSockets(http) {
 
                 // Проверка на наличие результата
                 if (taskResults.length > 0) {
-                    const tasktitle = taskResults[0];
+                    const tasktitle = taskResults[0].title;
+                    const assigned_user_name = taskResults[0].name
 
                     // Выполнение второго запроса для бейджей
                     connection.query(badgeQuery, [taskId], (err, badgeResults) => {
@@ -100,6 +102,7 @@ function handleSockets(http) {
                             const formattedTask = {
                                 taskid: taskId,
                                 title: tasktitle,
+                                assigned_user_name: assigned_user_name,
                                 badges: badges
                             };
 

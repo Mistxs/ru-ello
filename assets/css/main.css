@@ -5,7 +5,7 @@
     display: flex;
     justify-content: space-around;
     margin: 20px;
-    align-items: flex-start;
+    /*align-items: flex-start;*/
 }
 .column {
     position: relative;
@@ -19,6 +19,7 @@
     min-width: 300px;
     position: relative;
     margin-bottom: 20px;
+    min-height: 700px;
 }
 
 .col-wrapper-fixed {
@@ -28,16 +29,18 @@
     min-width: 300px;
     position: relative;
     margin-bottom: 20px;
+    height: 100%;
 }
 
 .task {
     position: relative;
     margin-bottom: 8px;
-    background-color: #00000045;
+    background-color: #fbe2e230;
     padding: 8px;
     border-radius: 5px;
-    cursor: pointer;
-}
+    cursor: move;
+    box-shadow: 2px 2px 14px 0px rgb(0 0 0 / 21%);
+    min-height: 100px;}
 
 .add-task-form, .add-column-form {
     margin-top: 10px;
@@ -102,14 +105,19 @@
 }
 
 .task-title {
-    padding-right: 20px;
+    padding: 5px 20px 5px 5px;
     border: none;
     word-wrap: break-word;
     background-color: transparent;
+    cursor: pointer;
     font-family: inherit; /* Наследовать семейство шрифтов */
     font-size: inherit; /* Наследовать размер шрифта */
     line-height: inherit; /* Наследовать межстрочный интервал */
     color: inherit; /* Наследовать цвет текста */
+}
+
+.task-wrapper {
+    min-height: 100px;
 }
 
 .task-title:focus {
@@ -185,6 +193,13 @@ body {
 
 .board-title {
     color: #f2ede7;
+    display: inline-flex;
+}
+
+.board-header button {
+    display: inline-flex;
+    flex-direction: row;
+    vertical-align: text-bottom;
 }
 
 .login-form {
@@ -304,4 +319,10 @@ body {
 .sidebar-bottom a:hover {
     color: #eef6ff;
     text-decoration: none;
+}
+
+.sharedicon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
 }

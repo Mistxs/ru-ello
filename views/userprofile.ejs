@@ -2,7 +2,7 @@
 <div class="sidebar">
     <div class="sidebar-content">
         <%- include('version') %>
-        <h1>Добро пожаловать, <%= username %></h1>
+        <h1 class="userinfo" username="<%= username %>" userid="<%= userid %>" >Добро пожаловать, <%= username %> </h1>
         <form id="logoutForm" action="/logout" method="post">
             <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
                 <i class="bx bx-power-off me-2 logout" ></i>

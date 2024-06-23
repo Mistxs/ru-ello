@@ -4,8 +4,14 @@
 
 
 <div class="content">
+
 <div class="board-wrapper">
-    <h3 class="board-title"></h3>
+    <div class="board-header">
+        <h3 class="board-title"></h3>
+        <% if (role === 'admin') { %>
+            <button class="btn btn-outline-warning" onclick="share();" data-toggle="modal" data-target="#share-brd" data-toggle="tooltip" data-placement="top" title="Пригласить пользователя"><i class='bx bx-link-external'></i></button>
+        <% } %>
+    </div>
     <div class="board" id="board">
     </div>
 </div>

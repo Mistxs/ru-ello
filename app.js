@@ -18,7 +18,7 @@ const http = require('http').createServer(app);
 
 
 // Парсинг тела запроса
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(session({
     secret: '(!78675&^!%!)',
     resave: false,
@@ -37,8 +37,10 @@ socketHandler(http);
 // Подключение маршрутов
 app.use('/', routes);
 
-const port = 3600;
+const port = 3700;
 
 http.listen(port, () => {
     console.log(`Сервер запущен на порту ${port}`);
 });
+
+

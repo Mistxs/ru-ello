@@ -37,6 +37,8 @@ function taskInfo(taskId) {
     const description = document.getElementById('task-description');
     const comments = document.querySelector('.comment-list');
     const deadlinetime = document.getElementById('task-deadline');
+    const taskUserButton = document.getElementById('task-user');
+    const taskUserDropdown = document.getElementById('user-dropdown');
 
     fetch(`/task-info/${taskId}`)
         .then(response => {
@@ -58,11 +60,61 @@ function taskInfo(taskId) {
             displayRemainingTime(deadlinetime.value);
             renderComments(data.comments);
 
+            // Заполнить выпадающий список пользователей
+            fetch('/task/users')
+                .then(response => response.json())
+
+                .then(users => {
+                    console.log(taskUserDropdown);
+                    taskUserDropdown.innerHTML = '';
+                    users.forEach(user => {
+                        const dropdownItem = document.createElement('a');
+                        dropdownItem.className = 'dropdown-item';
+                        dropdownItem.href = '#';
+                        dropdownItem.textContent = user.name;
+                        dropdownItem.setAttribute('data-user-id', user.id);
+                        dropdownItem.onclick = (event) => {
+                            event.preventDefault();
+                            taskUserButton.textContent = user.name;
+                            assignUserToTask(user.id, user.name);
+                        };
+                        taskUserDropdown.appendChild(dropdownItem);
+                    });
+
+                    const currentUser = users.find(user => user.id === data.assigned_user_id);
+                    taskUserButton.textContent = currentUser ? currentUser.name : 'Выберите исполнителя';
+                });
         })
         .catch(error => {
             console.error('Ошибка при загрузке данных:', error);
         });
 }
+
+
+function assignUserToTask(userId, userName) {
+    const taskId = document.getElementById('task-title').getAttribute('task_id');
+    fetch('/task-assign', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ taskId: taskId, userId: userId, userName: userName })
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('Task assigned successfully:', data);
+            document.getElementById('task-user').textContent = userName;
+        })
+        .catch(error => {
+            console.error('Ошибка при назначении задачи:', error);
+        });
+}
+
 
 
 
@@ -219,7 +271,7 @@ function renderComments(comments) {
             <div class="comment-item" comment_id="${comment.id}">
                 <div class="comment-content">${comment.text}</div>
                 <div class="comment-details">
-                    <span>${commentdate}</span> - <span class="comment-delete">Удалить</span>
+                    <span>${commentdate}</span> -  <span class="comment-user">${comment.username}</span> - <span class="comment-delete" onclick="deleteComment(this)">Удалить</span>
                 </div>
             </div>
         `;
@@ -228,13 +280,6 @@ function renderComments(comments) {
         commentsContainer.innerHTML += commentHTML;
     });
 
-    // Назначаем обработчики событий для кнопок "Удалить"
-    const deleteButtons = commentsContainer.querySelectorAll('.comment-delete');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            deleteComment(this); // Назначаем функцию удаления комментария
-        });
-    });
 }
 
 
@@ -263,8 +308,6 @@ function toggleEditMode() {
         rendertask(titleElement.getAttribute("task_id"));
     }
 }
-
-
 
 // обработчик на кнопку сохранить
 function saveTask(){
@@ -387,26 +430,25 @@ function addComment() {
         return;
     }
 
-    var currentDate = new Date(); // Получаем текущую дату и время
-    var formattedDate = currentDate.toLocaleString(); // Форматируем дату и время
+    let username = document.querySelector('.userinfo').getAttribute('username'); // Получаем имя пользователя (предположим, что оно доступно через объект comments)
 
-    var commentItem = document.createElement('div'); // Создаем новый элемент для комментария
-    commentItem.className = 'comment-item'; // Добавляем класс для стилизации (необходимо задать стили)
+    let currentDate = new Date(); // Получаем текущую дату и время
+    let formattedDate = currentDate.toLocaleString(); // Форматируем дату и время
 
-    var commentContent = document.createElement('div');
-    commentContent.className = 'comment-content';
-    commentContent.textContent = comment;
+    let commentItemHTML = `
+        <div class="comment-item">
+            <div class="comment-content">${comment}</div>
+            <div class="comment-details">
+                <span>${formattedDate}</span> - 
+                <span class="comment-user">${username}</span> - 
+                <span class="comment-delete" onclick="deleteComment(this)">Удалить</span>
+            </div>
+        </div>`;
 
-    var commentDetails = document.createElement('div');
-    commentDetails.className = 'comment-details';
-    commentDetails.innerHTML = '<span>' + formattedDate + '</span> - <span class="comment-delete" onclick="deleteComment(this)">Удалить</span>';
-
-    commentItem.appendChild(commentContent);
-    commentItem.appendChild(commentDetails);
-
-    document.getElementById('comment-list').appendChild(commentItem); // Добавляем комментарий в блок comment-list
+    document.getElementById('comment-list').innerHTML += commentItemHTML; // Добавляем комментарий в блок comment-list
     document.getElementById('task-comment').value = ''; // Очищаем поле ввода после добавления комментария
 }
+
 
 // Функция для удаления комментария
 function deleteComment(commentElement) {
@@ -425,7 +467,7 @@ function rendertask(taskId) {
 
         // 1. Обновление заголовка задачи
         let taskTitle = taskCard.querySelector('.task-title');
-        taskTitle.textContent = data.data.title.title;
+        taskTitle.textContent = data.data.title;
 
         // 2. Отображение бейджей задачи
         let badgeList = taskCard.querySelector('.badge-lists'); // предполагается, что у вас есть элемент .badge-lists для отображения бейджей
@@ -437,5 +479,9 @@ function rendertask(taskId) {
             badgeElement.textContent = badge.text;
             badgeList.appendChild(badgeElement);
         });
+
+        // 3. Обновление исполнителя
+        let taskuser = taskCard.querySelector('.task-user');
+        taskuser.innerHTML = `${data.data.assigned_user_name ? createAvatar(data.data.assigned_user_name) + `<span>${data.data.assigned_user_name}</span>` : ''}`
     });
 }

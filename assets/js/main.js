@@ -11,7 +11,7 @@ board.addEventListener('click', (event) => {
     }
 
     if (event.target.classList.contains('task-title')) {
-        const taskId = event.target.parentNode.getAttribute('task_id');
+        const taskId = event.target.parentNode.parentNode.getAttribute('task_id');
         taskInfo(taskId);
     }
 
@@ -41,8 +41,10 @@ function addtask(target) {
 
     // Добавление разметки для карточки задачи
     newTask.innerHTML = `
-        <span class="badge"></span>
-        <textarea class="task-title" rows="1" data-toggle="modal" data-target="#staticBackdrop"></textarea>
+        <div class="task-wrapper" data-toggle="modal" data-target="#staticBackdrop">
+            <div class="badge-lists"></div>
+            <textarea class="task-title" rows="1"></textarea>
+        </div>
         <button class="btn delete-task"><i class="bx bx-trash"></i></button>
     `;
 
@@ -56,7 +58,6 @@ function addtask(target) {
     // Передать фокус на блок task-title для редактирования
     let taskTitleTextarea = newTask.querySelector('.task-title');
     taskTitleTextarea.focus();
-    
 
     // Автоматически подгонять высоту textarea под контент
     taskTitleTextarea.addEventListener('input', function() {
@@ -80,14 +81,19 @@ function addtask(target) {
         } else {
             // Если нужно, преобразовать textarea обратно в div с текстом
             let taskTitleDiv = document.createElement('div');
-            taskTitleDiv.innerHTML = `<div class="task-title" data-toggle="modal" data-target="#staticBackdrop">${editedTaskTitle}</div>`;
-            newTask.replaceChild(taskTitleDiv.firstChild, this);
+            taskTitleDiv.className = 'task-title';
+            taskTitleDiv.textContent = editedTaskTitle;
 
+            // Убедиться, что this является дочерним элементом task-wrapper
+            let taskWrapper = newTask.querySelector('.task-wrapper');
+            if (taskWrapper.contains(this)) {
+                taskWrapper.replaceChild(taskTitleDiv, this);
+            }
 
             let boardId = board.querySelector('.board').getAttribute("boardId");
             let columnId = target.getAttribute('cid');
 
-            socket.emit('add-task', {name: editedTaskTitle, boardId: boardId, column: columnId});
+            socket.emit('add-task', { name: editedTaskTitle, boardId: boardId, column: columnId });
         }
     });
 
@@ -95,9 +101,10 @@ function addtask(target) {
         let insertedTask = target.querySelector('[task_id="new"]');
         if (insertedTask) {
             insertedTask.setAttribute('task_id', data.taskId);
-        } 
+        }
     });
 }
+
 
 function addColumn(){
     const board = document.querySelector('.board');
@@ -159,3 +166,69 @@ document.querySelector('.logout').addEventListener('click', function (event) {
     event.preventDefault();
     document.getElementById('logoutForm').submit();
 });
+
+
+function share() {
+    fetch('/users',{
+        method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ boardId: document.getElementById('board').getAttribute('boardId') })
+    }).then(response => response.json())
+        .then(data => {
+            const userList = document.getElementById('user-list');
+            userList.innerHTML = ''; // Очистить список перед заполнением
+            data.forEach(user => {
+                const userRow = document.createElement('tr');
+                userRow.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.login}</td>
+                    <td>
+                        ${user.is_linked == 1
+                    ? `<button class="btn btn-sm btn-danger" onclick="removeUserFromBoard(${user.id}, this)">Отозвать доступ</button>`
+                    : `<button class="btn btn-sm btn-primary" onclick="addUserToBoard(${user.id}, this)">Дать доступ</button>`
+                }
+                    </td>
+                `;
+                userList.appendChild(userRow);
+            });
+        });
+}
+
+    function addUserToBoard(userId, button) {
+    fetch('/boards/addUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: userId, boardId: document.getElementById('board').getAttribute('boardId') })
+    }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.className = 'btn btn-sm btn-danger';
+                button.textContent = 'Отозвать доступ';
+                button.setAttribute('onclick', `removeUserFromBoard(${userId}, this)`);
+                alert('Пользователь добавлен к доске');
+            }
+        });
+}
+
+    function removeUserFromBoard(userId, button) {
+    fetch('/boards/removeUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: userId, boardId: document.getElementById('board').getAttribute('boardId') })
+    }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.className = 'btn btn-sm btn-primary';
+                button.textContent = 'Дать доступ';
+                button.setAttribute('onclick', `addUserToBoard(${userId}, this)`);
+                alert('Доступ пользователя отозван');
+            }
+        });
+}
+
