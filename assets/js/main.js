@@ -44,6 +44,7 @@ function addtask(target) {
         <div class="task-wrapper" data-toggle="modal" data-target="#staticBackdrop">
             <div class="badge-lists"></div>
             <textarea class="task-title" rows="1"></textarea>
+            <div class="task-user" style="display: flex; align-items: center;"> </div>    
         </div>
         <button class="btn delete-task"><i class="bx bx-trash"></i></button>
     `;

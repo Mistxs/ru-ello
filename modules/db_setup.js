@@ -52,7 +52,14 @@ function createTables(connection, callback) {
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             login VARCHAR(255) NOT NULL,
-            password VARCHAR(255) NOT NULL
+            password VARCHAR(255) NOT NULL,
+            role varchar(255) null
+        )`,
+        `CREATE TABLE IF NOT EXISTS board_user_link
+        (
+            id int auto_increment primary key,
+            board_id int null,
+            user_id  int null
         )`,
         `CREATE TABLE IF NOT EXISTS boards (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -85,6 +92,7 @@ function createTables(connection, callback) {
             weight INT NULL,
             createdate DATETIME DEFAULT CURRENT_TIMESTAMP NULL,
             deadline DATETIME DEFAULT CURRENT_TIMESTAMP NULL,
+            assigned_user_id int null,
             CONSTRAINT tasks_boards_id_fk
                 FOREIGN KEY (board_id) REFERENCES boards (id)
                 ON UPDATE CASCADE

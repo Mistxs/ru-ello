@@ -528,8 +528,6 @@ router.post('/task-info/:taskId/save', (req, res) => {
 
             const currentCommentIds = rows.map(row => row.id);
             let commentsfront = []
-            console.log(currentCommentIds);
-
             // Обработка пришедших от клиента комментариев
             if (comments.length === 0) {
                 // Если список комментариев пуст, удаляем все комментарии для данной задачи
