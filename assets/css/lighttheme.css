@@ -1,13 +1,24 @@
 body {
-    background: linear-gradient(to right, rgb(255 255 255), rgb(245 229 253));
+    background: linear-gradient(to right, rgb(255 255 255), rgb(234 229 237));
 }
 
 .board-title {
     color: #644c2e
 }
 
+.col-wrapper {
+    min-width: 350px;
+}
+
 .board .col-wrapper, .col-wrapper-fixed {
     color: rgb(7 6 6);
+    background-color: rgb(255 255 255 / 0%);
+    border-radius: 5px;
+    box-shadow: none;
+    border: 1px solid rgb(151 136 136 / 20%);
+    padding: 15px;
+    margin: 10px;
+    width: 300px;
 }
 
 .delete-task {
@@ -22,18 +33,39 @@ body {
 }
 
 .task {
-    box-shadow: 2px 2px 14px 0px rgb(0 0 0 / 10%);
-    /*background: linear-gradient(to bottom, rgb(255 255 255), rgb(96 89 100 / 0%));*/
-    background: linear-gradient(to bottom, rgb(255 255 255), rgb(255 243 214 / 0%));
+    box-shadow: 0px 2px 5px 0px rgb(0 0 0 / 18%);
+    background: #f9f9f999;
+    border: 1px solid rgb(151 136 136 / 20%);
+    margin: 10px 0px;
+    transition: .4s;
 }
 
+.task:hover {
+    background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(254 224 255 / 22%));
+}
+
+.task-title {
+    color: #102b2b;
+    font-size: 18px;
+}
+
+.avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.task-user span {
+    font-size: 12px;
+}
 
 .menu-toggle {
     color: #070606;
 }
 
 .sidebar {
-    background: #f0f0ff00;
+    background: #dbdbdb6e;
 }
 
 .sidebar h1, .sidebar h6 {
