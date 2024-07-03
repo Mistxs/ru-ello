@@ -326,3 +326,72 @@ body {
     width: 20px;
     height: 20px;
 }
+
+
+.theme-switch-wrapper {
+    display: flex;
+    position: absolute;
+    right: 10px;
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 20px; /* Уменьшено с 34px */
+    position: relative;
+    width: 40px; /* Уменьшено с 60px */
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: #a48888cc;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+}
+
+.slider:before {
+    background-color: white;
+    bottom: 3px; /* Уменьшено с 4px */
+    content: "";
+    height: 14px; /* Уменьшено с 26px */
+    left: 3px; /* Уменьшено с 4px */
+    position: absolute;
+    transition: .4s;
+    width: 14px; /* Уменьшено с 26px */
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px); /* Уменьшено с 26px */
+}
+
+.slider.round {
+    border-radius: 20px; /* Уменьшено с 34px */
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.icon {
+    font-size: 16px; /* Уменьшено с 24px */
+    margin: 0 5px; /* Уменьшено с 10px */
+}
+
+.sun {
+    color: #FFD700;
+}
+
+.moon {
+    color: #4A4A4A;
+}

@@ -1,13 +1,20 @@
 
 <div class="sidebar">
     <div class="sidebar-content">
+        <div class="theme-switch-wrapper">
+            <span class="icon sun">️🌙</span>
+            <label class="theme-switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider round"></span>
+            </label>
+            <span class="icon moon">☀️</span>
+        </div>
         <%- include('version') %>
         <h1 class="userinfo" username="<%= username %>" userid="<%= userid %>" >Добро пожаловать, <%= username %> </h1>
         <form id="logoutForm" action="/logout" method="post">
             <button type="submit" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Выйти">
                 <i class="bx bx-power-off me-2 logout" ></i>
             </button>
-
         </form>
 
         <hr>
